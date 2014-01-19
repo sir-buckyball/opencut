@@ -1,0 +1,40 @@
+body {
+  color: #44502F;
+  font-family: sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+nav {
+  color: #0D3914;
+  background: #A0B57D;
+  border-bottom: 2px solid #556B2F;
+  height: 24px;
+  text-align: right;
+  padding: 0.5em
+}
+h1 {
+  float: left;
+  font-size: 24px;
+  padding: 0;
+  margin: 0;
+}
+nav a {
+  color: #0D3914;
+  padding-left: 1em;
+  vertical-align: middle;
+}
+
+#output-gcode {
+  overflow: auto;
+}
+
+#controls {
+  background: #CCC;
+}
+
+/* TODO: media queries to make the input a reasonable size. */
+#yaml-editor {
+  height: 24em;
+  /*width: 24em;*/
+}

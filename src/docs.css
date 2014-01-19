@@ -1,0 +1,51 @@
+/* http://colorschemedesigner.com/#2p51ThXeww0w0 */
+
+body {
+  color: #44502F;
+  margin: 0;
+  padding: 0;
+  font-family: sans-serif;
+}
+
+article {
+  margin: 1em;
+}
+
+h2, h3 {
+  color: #26422B;
+}
+
+nav {
+  background: #A0B57D;
+  border-bottom: 2px solid #556B2F;
+  font-size: 18pt;
+  font-weight: bold;
+}
+nav a {
+  color: #0D3914;
+  text-decoration: none;
+}
+nav a:before {
+  content: "/ ";
+  text-decoration: none;
+}
+
+.spec {
+  color: #0D3914;
+  font-family: monospace;
+  padding: 1em;
+  margin: 0 1em;
+}
+.spec ul {
+  margin: 0;
+}
+
+.example {
+  font-family: monospace;
+  padding: 1em;
+  margin: 0 2em;
+  color: #32460F;
+  background: #A0B57D;
+  border-radius: 4px;
+  border: solid 1px #556B2F;
+}

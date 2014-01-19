@@ -1,0 +1,177 @@
+<html>
+  <head>
+    <title>opencut/docs</title>
+    <link rel="stylesheet" href="docs.css">
+  </head>
+  <body>
+    <nav>
+      <a href="index.html">opencut</a>
+      <a href="#">docs</a>
+    </nav>
+
+    <article>
+      <p>The simpliest way to interact with opencut is to write a
+        <a href="http://yaml.org">YAML</a> description of the cuts you would like.
+        More advanced users can use the javascript API directly if they find they
+        have more complex needs than can be easily described directly.</p>
+
+      <h2>overview</h2>
+      <p>A top level <code>Job</code> object defines the workspace parameters and the cuts we would like to have made. It is defined as follows:</p>
+
+      <section class="spec">
+        <strong>Job</strong>
+        <ul>
+          <li><strong>units</strong> <em>{enum}</em> - The  unit of measurement to use ["mm", "inches"]</li>
+          <li><strong>bit_diameter</strong> <em>{number}</em> - The diameter of the cutting bit</li>
+          <li><strong>feed_rate</strong> <em>{number}</em> - The X/Y feed rate in units per minute</li>
+          <li><strong>plunge_rate</strong> <em>{number}</em> - The Z plunge rate in units per minute</li>
+          <li><strong>z_step_size</strong> <em>{number}</em> - How far down to cut in each pass</li>
+          <li><strong>safety_height</strong> <em>{number}</em> - A safe height for free gantry movement</li>
+          <li><strong>name</strong> <em>{string, optional}</em> - The name of this job</li>
+          <li><strong>cuts</strong> <em>{Cut, repeated}</em> - A list of cuts to make</li>
+        </ul>
+
+        <br>
+        <strong>Cut</strong>
+        <ul>
+          <li><strong>type</strong> <em>{string}</em> - The name of the cut to make</li>
+          <li><strong>depth</strong> <em>{number}</em> - The depth of the cut to make</li>
+          <li><em>[cut type specific parameters]</em></li>
+        </ul>
+
+        <br>
+        <strong>Shape</strong>
+        <ul>
+          <li><strong>type</strong> <em>{enum}</em> - The type of shape ["rectangle", "circle"]</li>
+          <li><em>[shape specific parameters]</em></li>
+        </ul>
+
+        <br>
+        <strong>Shape[circle]</strong>
+        <ul>
+          <li><strong>center</strong> <em>{array&lt;number&gt;}</em> - A point where the center of the circle should be</li>
+          <li><strong>radius</strong> <em>{number}</em> - The radius of the circle from the center point</li>
+        </ul>
+
+        <br>
+        <strong>Shape[rectangle]</strong>
+        <ul>
+          <li><strong>origin</strong> <em>{array&lt;number&gt;}</em> - A point where the bottom-left corner should be</li>
+          <li><strong>size</strong> <em>{array&lt;number&gt;}</em> - The [width, height] of the rectangle</li>
+        </ul>
+      </section>
+
+      <h2>cut types</h2>
+
+      <section id="cut-drill">
+        <h3>drill</h3>
+        <p>Drill cuts will move the cutter to each specified point, then drill down making a hole the size of the cutting bit.</p>
+        <div class="spec">
+          <strong>Cut[drill]</strong>
+          <ul>
+            <li><strong>points</strong> <em>{array&lt;array&lt;number&gt;&gt;}</em> - A list of points to drill at</li>
+          </ul>
+        </div>
+        <pre class="example">
+units: inch
+bit_diameter: 0.125
+feed_rate: 15
+plunge_rate: 5
+
+cuts:
+- type: drill
+  depth: -0.25
+  points: [[0.125, 0.125], [0.125, 1.375]]
+</pre>
+    </section>
+
+    <section id="cut-path">
+      <h3>path</h3>
+      <p>Path cuts will move the cutter along the specified path in multiple passes to reach the specified depth.</p>
+      <div class="spec">
+        <strong>Cut[path]</strong>
+        <ul>
+          <li><strong>points</strong> <em>{array&lt;array&lt;number&gt;&gt;}</em> - A list of points to drill at</li>
+        </ul>
+      </div>
+      <pre class="example">
+units: inch
+bit_diameter: 0.125
+feed_rate: 15
+plunge_rate: 5
+z_step_size: 0.1
+
+cuts:
+- type: path
+  depth: -0.2
+  points: [[0.375, 0.375], [0.625, 0.75], [0.375, 1.125]]
+</pre>
+      </section>
+
+      <section id="cut-profile">
+        <h3>profile</h3>
+        <p>Profile cuts will move the cutter such that the cut is to one side or
+          the other of a shape. For example, if cutting a circle, the cutter could
+          cut out the inside to make a hole of the specified size, or it could cut
+          around the outside to make a plug of the specified size.</p>
+        <div class="spec">
+          <strong>Cut[profile]</strong>
+          <ul>
+            <li><strong>side</strong> <em>{enum}</em> - Which side of the shape to cut ["inside", "outside"]</li>
+            <li><strong>shape</strong> <em>{Shape}</em> - The shape to cut</li>
+          </ul>
+        </div>
+        <pre class="example">
+units: inch
+bit_diameter: 0.125
+feed_rate: 15
+plunge_rate: 5
+z_step_size: 0.1
+
+cuts:
+- type: profile
+  side: inside
+  depth: -0.25
+  shape: {type: circle, radius: 0.25, center: [1.5, 0.75]}
+
+- type: profile
+  side: outside
+  depth: -0.25
+  shape: {type: rectangle, origin: [0, 0], size: [3, 1.5]}
+</pre>
+      </section>
+
+      <section id="cut-pocket">
+        <h3>pocket</h3>
+        <p>Pocket cuts are used to cut away material from inside a shape. This is useful when you don't want to cut all of the way through your workpiece.</p>
+        <div class="spec">
+          <strong>Cut[pocket]</strong>
+          <ul>
+            <li><strong>shape</strong> <em>{Shape}</em> - The shape to cut</li>
+          </ul>
+        </div>
+        <pre class="example">
+units: inch
+bit_diameter: 0.125
+feed_rate: 15
+plunge_rate: 5
+z_step_size: 0.1
+
+cuts:
+- type: pocket
+  depth: -0.125
+  shape: {type: rectangle, origin: [0.25, 0.25], size: [0.5, 1]}
+
+- type: pocket
+  depth: -0.125
+  shape: {type: circle, radius: 0.5, center: [1.5, 0.75]}
+</pre>
+      </section>
+
+      <section id="advanced">
+        <h2>advanced</h2>
+        <p>For those who find this level of expression too limiting, the javascript API allows for additional cut types to be specified. It is also possible to compose a series of cuts into a new cut type. Please reference the github source code for more details.</p>
+      </section>
+    </article>
+  </body>
+</html>

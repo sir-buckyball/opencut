@@ -1,0 +1,77 @@
+<html>
+  <head>
+    <title>openCut</title>
+    <link rel="stylesheet" href="index.css">
+    <script type="text/javascript" src="index-deps.js"></script>
+    <script type="text/javascript" src="opencut.js"></script>
+    <script type="text/javascript" src="cuttype-drill.js"></script>
+    <script type="text/javascript" src="cuttype-path.js"></script>
+    <script type="text/javascript" src="cuttype-pocket.js"></script>
+    <script type="text/javascript" src="cuttype-profile.js"></script>
+    <script type="text/javascript" src="index.js"></script>
+  </head>
+  <body>
+    <nav id="top-nav">
+      <h1>opencut</h1>
+      <a href="about.html" target="">about</a>
+      <a href="docs.html" target="">docs</a>
+    </nav>
+
+    <div id="controls">
+      <!-- this input is needed to let a user select a file, but it is ugly so we hide it. -->
+      <input type="file" id="input-file-local" style="display:none">
+      <button id="btn-open-file">open file</button>
+      <button id="btn-save-file">save file</button>
+      <button id="btn-compile-gcode">compile gcode</button>
+      <a id="link-download-gcode" style="display:none">download gcode</a>
+    </div>
+
+    <div class="container">
+      <div class="row">
+        <div class="col-md-8">
+          <div id="editor-holder">
+            <div id="yaml-editor">name: test_coaster
+units: inch
+bit_diameter: 0.125
+feed_rate: 15
+plunge_rate: 5
+z_step_size: 0.1
+
+cuts:
+- type: drill
+  depth: -0.25
+  points: [[0.125, 0.125], [0.125, 1.375], [2.875, 1.375], [2.875, 0.125]]
+
+- type: pocket
+  depth: -0.125
+  shape: {type: rectangle, origin: [0.25, 0.25], size: [0.5, 1]}
+
+- type: pocket
+  depth: -0.125
+  shape: {type: circle, radius: 0.5, center: [1.5, 0.75]}
+
+- type: path
+  depth: -0.2
+  points: [[0.375, 0.375], [0.625, 0.75], [0.375, 1.125]]
+
+- type: profile
+  side: inside
+  depth: -0.25
+  shape: {type: circle, radius: 0.25, center: [1.5, 0.75]}
+
+- type: profile
+  side: inside
+  depth: -0.25
+  shape: {type: rectangle, origin: [2.25, 0.25], size: [0.5, 1]}
+
+- type: profile
+  side: outside
+  depth: -0.25
+  shape: {type: rectangle, origin: [0, 0], size: [3, 1.5]}
+</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,40 @@
+# A demonstration of all cut types.
+
+name: test_coaster
+units: inch
+bit_diameter: 0.125
+feed_rate: 15
+plunge_rate: 5
+z_step_size: 0.1
+
+cuts:
+- type: drill
+  depth: -0.25
+  points: [[0.125, 0.125], [0.125, 1.375], [2.875, 1.375], [2.875, 0.125]]
+
+- type: pocket
+  depth: -0.125
+  shape: {type: rectangle, origin: [0.25, 0.25], size: [0.5, 1]}
+
+- type: pocket
+  depth: -0.125
+  shape: {type: circle, radius: 0.5, center: [1.5, 0.75]}
+
+- type: path
+  depth: -0.2
+  points: [[0.375, 0.375], [0.625, 0.75], [0.375, 1.125]]
+
+- type: profile
+  side: inside
+  depth: -0.25
+  shape: {type: circle, radius: 0.25, center: [1.5, 0.75]}
+
+- type: profile
+  side: inside
+  depth: -0.25
+  shape: {type: rectangle, origin: [2.25, 0.25], size: [0.5, 1]}
+
+- type: profile
+  side: outside
+  depth: -0.25
+  shape: {type: rectangle, origin: [0, 0], size: [3, 1.5]}
