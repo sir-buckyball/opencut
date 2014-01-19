@@ -100,19 +100,36 @@ $(document).ready(function() {
     // Process the job description.
     var processedJob = window.opencut.toGCode(window.job);
 
-    // Generate the output.
-    window.output = [];
-    for (var j = 0; j < processedJob.warnings.length; j++) {
-      window.output.push("; WARNING: " + processedJob.warnings[j]);
+    // Display any warnings to the user.
+    var warningsElement = $("#user-warnings");
+    warningsElement.text("");
+    if (processedJob.warnings.length > 0) {
+      warningsElement.show();
+    } else {
+      warningsElement.hide();
     }
-    window.output = window.output.concat(processedJob.gcode);
-    window.output = window.output.join("\n");
-    $("#output-gcode").text(window.output);
+    for (var j = 0; j < processedJob.warnings.length; j++) {
+      var d = $("<div>");
+      d.addClass("warning");
+      d.text(processedJob.warnings[j]);
+      warningsElement.append(d);
+    }
 
-    // Update the download link.
-    var filename = (window.job.name || "unnamed") + ".gcode";
-    var blob = new Blob([window.output], {type:"text/plain"});
-    console.log("saving file: " + filename);
-    window.saveAs(blob, filename);
+    // Generate the output.
+    if (processedJob.warnings.length == 0) {
+      window.output = [];
+      for (var j = 0; j < processedJob.warnings.length; j++) {
+        window.output.push("; WARNING: " + processedJob.warnings[j]);
+      }
+      window.output = window.output.concat(processedJob.gcode);
+      window.output = window.output.join("\n");
+      $("#output-gcode").text(window.output);
+
+      // Update the download link.
+      var filename = (window.job.name || "unnamed") + ".gcode";
+      var blob = new Blob([window.output], {type:"text/plain"});
+      console.log("saving file: " + filename);
+      window.saveAs(blob, filename);
+    }
   });
 });

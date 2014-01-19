@@ -33,8 +33,11 @@ nav a {
   background: #CCC;
 }
 
-/* TODO: media queries to make the input a reasonable size. */
-#yaml-editor {
-  height: 24em;
-  /*width: 24em;*/
+.warning {
+  color: #a94442;
+  background: #f2dede;
+  border: solid 1px #ebccd1;
+  border-radius: 2px;
+  margin: 0.25em;
+  padding: 0.25em;
 }
