@@ -8,58 +8,57 @@ window.opencut.registerCutType("path", function generatePathCut(workspace, cut) 
   var warnings = [];
   var gcode = [];
 
+  // Validate the requested cut.
   if (cut.points === undefined || cut.points === null || cut.points.length === 0) {
     throw "path cut does not have any 'points'";
   }
-
   if (cut.depth === undefined || typeof cut.depth != "number" || cut.depth >= 0) {
     throw "path cut has an invalid 'depth'";
   }
+  for (var i = 0; i < cut.points.length; i++) {
+    if (cut.points[i].length != 2) {
+      throw "path cut expects [x,y] coordinate points: " + JSON.stringify(cut.points[i]);
+    }
+    if (typeof cut.points[i][0] != "number" ||
+        typeof cut.points[i][1] != "number") {
+      throw "path cut points must be numbers: "  + JSON.stringify(cut.points[i]);
+    }
+  }
 
-  // Move up a bit to a safe height for rapid movement.
   gcode.push("G90");
 
+  // Position over the starting point.
   var z = workspace.safety_height;
   gcode.push("G0 Z" + z + " F" + workspace.plunge_rate);
+  gcode.push("G0 X" + cut.points[0][0] + " Y" + cut.points[0][1] +
+      " F" + workspace.feed_rate);
 
+  // Cut the paths.
   var numZPasses = Math.ceil(-cut.depth / workspace.z_step_size);
   for (var k = 0; k < numZPasses; k++) {
-    for (var i = 0; i < cut.points.length; i++) {
-      if (cut.points[i].length != 2) {
-        warnings.push("invalid 2D point: " + JSON.stringify(cut.points[i]));
-        gcode = [];
-        break;
-      }
-
-      var x = cut.points[i][0];
-      var y = cut.points[i][1];
-      if (typeof x != "number" || typeof y != "number") {
-        warnings.push("invalid numeric values: " + JSON.stringify(cut.points[i]));
-        gcode = [];
-        break;
-      }
-
-      // move to our destination (rapidly for initial positioning), then plunge.
-      var cmd = (i === 0 && k === 0) ? "G0" : "G1"
-      gcode.push(cmd + " X" + x + " Y" + y + " F" + workspace.feed_rate);
-      if (i === 0) {
-        gcode.push("G1 Z" + z + " F" + workspace.plunge_rate);
-      }
-    }
-
-    // Bring the cutter up to a safe movement area.
-    gcode.push("G0 Z" + workspace.safety_height + " F" + workspace.plunge_rate);
-
-    // To speed things up, process the list in reverse for the next pass.
-    cut.points = cut.points.reverse();
-
-    // In the first pass, we just need to go to our starting point
-    if (z <= cut.depth) {
-      break;
+    // Decide how far down to drop.
+    if (z > 0) {
+      z = Math.max(cut.depth, -workspace.z_step_size);
     } else {
       z = Math.max(cut.depth, z - workspace.z_step_size);
     }
+    gcode.push("G1 Z" + z + " F" + workspace.plunge_rate);
+
+    // Cut the path. We are alreay at the starting point.
+    for (var j = 1; j < cut.points.length; j++) {
+      gcode.push("G1" +
+          " X" + cut.points[j][0] +
+          " Y" + cut.points[j][1] +
+          " F" + workspace.feed_rate);
+    }
+
+    // To speed things up, process the list in reverse for the next pass.
+    cut.points = cut.points.reverse();
   }
+
+  // Bring the cutter up to a safe movement area.
+  gcode.push("G1 Z0 F" + workspace.plunge_rate);
+  gcode.push("G0 Z" + workspace.safety_height + " F" + workspace.plunge_rate);
 
   return {
     "warnings": warnings,
