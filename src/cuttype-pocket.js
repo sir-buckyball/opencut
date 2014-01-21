@@ -158,12 +158,10 @@
     var z = workspace.safety_height;
     gcode.push("G90");
     gcode.push("G0 Z" + z + " F" + workspace.plunge_rate);
+    gcode.push("G0 X" + x + " Y" + y + " F" + workspace.feed_rate);
 
     var numZPasses = Math.ceil(-cut.depth / workspace.z_step_size);
     for (var k = 0; k < numZPasses; k++) {
-      // Go to the center of the circle.
-      gcode.push("G0 X" + x + " Y" + y + " F" + workspace.feed_rate);
-
       // Decide how far down to drop.
       if (z <= cut.depth) {
         break;
@@ -172,6 +170,10 @@
       } else {
         z = Math.max(cut.depth, z - workspace.z_step_size);
       }
+
+      // Go to the center of the circle, then plunge.
+      gcode.push("G1 X" + x + " Y" + y +
+          " Z" + (z + 2 * workspace.z_step_size) + " F" + workspace.feed_rate);
       gcode.push("G1 Z" + z + " F" + workspace.plunge_rate);
 
       // Make a bunch of circles radiating outward.
@@ -189,10 +191,11 @@
       gcode.push("G2 X" + x + " Y" + (y - rmax) + " I" + (-rmax) + " J" + 0);
       gcode.push("G2 X" + (x - rmax) + " Y" + y + " I" + 0 + " J" + rmax);
       gcode.push("G2 X" + x + " Y" + (y + rmax) + " I" + r + " J" + 0);
-
-      // Bring the cutter up to a safe movement area.
-      gcode.push("G0 Z" + workspace.safety_height + " F" + workspace.plunge_rate);
     }
+
+    // Bring the cutter up to a safe movement area.
+    gcode.push("G1 Z0 F" + workspace.plunge_rate);
+    gcode.push("G0 Z" + workspace.safety_height + " F" + workspace.plunge_rate);
 
     return {
       "warnings": warnings,
