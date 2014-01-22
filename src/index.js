@@ -116,10 +116,10 @@ $(document).ready(function() {
     }
 
     // Generate the output.
-    if (processedJob.warnings.length == 0) {
+    if (processedJob.warnings.length === 0) {
       window.output = [];
-      for (var j = 0; j < processedJob.warnings.length; j++) {
-        window.output.push("; WARNING: " + processedJob.warnings[j]);
+      for (var k = 0; k < processedJob.warnings.length; k++) {
+        window.output.push("; WARNING: " + processedJob.warnings[k]);
       }
       window.output = window.output.concat(processedJob.gcode);
       window.output = window.output.join("\n");
