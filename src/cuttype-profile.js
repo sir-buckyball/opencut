@@ -93,7 +93,8 @@
     }
 
     // Bring the cutter up to a safe movement area.
-    gcode.push("G0 Z" + workspace.safety_height + " F" + workspace.plunge_rate);
+    gcode.push("G1 Z0 F" + workspace.plunge_rate);
+    gcode.push("G0 Z" + workspace.safety_height);
 
     return {
       "warnings": warnings,
@@ -165,7 +166,8 @@
     }
 
     // Bring the cutter up to a safe movement area.
-    gcode.push("G0 Z" + workspace.safety_height + " F" + workspace.plunge_rate);
+    gcode.push("G1 Z0 F" + workspace.plunge_rate);
+    gcode.push("G0 Z" + workspace.safety_height);
 
     return {
       "warnings": warnings,
