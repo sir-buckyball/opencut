@@ -1,6 +1,23 @@
 window.lastLoadedFilename = "unnamed.yaml";
 
 $(document).ready(function() {
+  // Helper function to show warnings to the user.
+  var showWarning = function(msg) {
+    var warningsElement = $("#user-warnings");
+    var m = $("<div>");
+    m.addClass("warning");
+    m.text(msg);
+    warningsElement.append(m);
+    warningsElement.show();
+  };
+
+  // Helper function to clear warnings to the user.
+  var clearWarnings = function() {
+    var warningsElement = $("#user-warnings");
+    warningsElement.text("");
+    warningsElement.hide();
+  };
+
   // Configure the editor.
   $("#yaml-editor").height($(window).height() - $("#yaml-editor").position().top);
   var editor = window.ace.edit("yaml-editor");
@@ -95,24 +112,23 @@ $(document).ready(function() {
         contentLines.push(lines[i]);
       }
     }
-    window.job = window.YAML.parse(contentLines.join("\n"));
+
+    clearWarnings();
+
+    try {
+      window.job = window.YAML.parse(contentLines.join("\n"));
+    } catch (err) {
+      console.warn("failed to parse YAML", err);
+      showWarning("failed to parse YAML: " + err.message);
+      return;
+    }
 
     // Process the job description.
     var processedJob = window.opencut.toGCode(window.job);
 
     // Display any warnings to the user.
-    var warningsElement = $("#user-warnings");
-    warningsElement.text("");
-    if (processedJob.warnings.length > 0) {
-      warningsElement.show();
-    } else {
-      warningsElement.hide();
-    }
     for (var j = 0; j < processedJob.warnings.length; j++) {
-      var d = $("<div>");
-      d.addClass("warning");
-      d.text(processedJob.warnings[j]);
-      warningsElement.append(d);
+      showWarning(processedJob.warnings[j]);
     }
 
     // Generate the output.
