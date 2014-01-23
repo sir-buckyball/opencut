@@ -121,6 +121,7 @@ cuts:
           <strong>Cut[profile]</strong>
           <ul>
             <li><strong>side</strong> <em>{enum}</em> - Which side of the shape to cut ["inside", "outside"]</li>
+            <li><strong>corner_compensation</strong> <em>{bool}</em> - True to cut all the way to the corner, compensating for bit size</li>
             <li><strong>shape</strong> <em>{Shape}</em> - The shape to cut</li>
           </ul>
         </div>
@@ -133,13 +134,14 @@ z_step_size: 0.1
 
 cuts:
 - type: profile
-  side: inside
+  side: outside
   depth: -0.25
   shape: {type: circle, radius: 0.25, center: [1.5, 0.75]}
 
 - type: profile
-  side: outside
+  side: inside
   depth: -0.25
+  corner_compensation: true
   shape: {type: rectangle, origin: [0, 0], size: [3, 1.5]}
 </pre>
       </section>
