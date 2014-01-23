@@ -52,6 +52,17 @@
       throw "pocket rectangle height must be a positive number";
     }
 
+    // Validate corner compensation options.
+    var cornerCompensation = 0;
+    if (cut.corner_compensation !== undefined) {
+      if (typeof cut.corner_compensation !== "boolean") {
+        throw "profile cornerCompensation is expected to be a boolean";
+      } else if (cut.corner_compensation === true) {
+        var d = workspace.bit_diameter;
+        cornerCompensation = Math.sqrt(d * d * 2) - d;
+      }
+    }
+
     // Adjust the bounds for the bit diameter.
     originX += workspace.bit_diameter / 2;
     originY += workspace.bit_diameter / 2;
@@ -109,9 +120,33 @@
       gcode.push("G90");
       gcode.push("G1 X" + (originX + maxWidth) + " Y" + (originY + maxHeight));
       gcode.push("G1 X" + (originX + maxWidth) + " Y" + originY);
+      if (cornerCompensation > 0) {
+        gcode.push("G1" +
+            " X" + (originX + maxWidth + cornerCompensation) +
+            " Y" + (originY - cornerCompensation));
+        gcode.push("G1 X" + (originX + maxWidth) + " Y" + originY);
+      }
       gcode.push("G1 X" + originX + " Y" + originY);
+      if (cornerCompensation > 0) {
+        gcode.push("G1" +
+            " X" + (originX - cornerCompensation) +
+            " Y" + (originY - cornerCompensation));
+        gcode.push("G1 X" + originX + " Y" + originY);
+      }
       gcode.push("G1 X" + originX + " Y" + (originY + maxHeight));
+      if (cornerCompensation > 0) {
+        gcode.push("G1" +
+            " X" + (originX - cornerCompensation) +
+            " Y" + (originY + maxHeight + cornerCompensation));
+        gcode.push("G1 X" + originX + " Y" + (originY + maxHeight));
+      }
       gcode.push("G1 X" + (originX + maxWidth) + " Y" + (originY + maxHeight));
+      if (cornerCompensation > 0) {
+        gcode.push("G1" +
+            " X" + (originX + maxWidth + cornerCompensation) +
+            " Y" + (originY + maxHeight + cornerCompensation));
+        gcode.push("G1 X" + (originX + maxWidth) + " Y" + (originY + maxHeight));
+      }
     }
 
     // Bring the cutter up to a safe movement area.

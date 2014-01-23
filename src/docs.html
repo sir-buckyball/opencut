@@ -152,6 +152,7 @@ cuts:
         <div class="spec">
           <strong>Cut[pocket]</strong>
           <ul>
+            <li><strong>corner_compensation</strong> <em>{bool}</em> - True to cut all the way to the corner, compensating for bit size</li>
             <li><strong>shape</strong> <em>{Shape}</em> - The shape to cut</li>
           </ul>
         </div>
@@ -165,6 +166,7 @@ z_step_size: 0.1
 cuts:
 - type: pocket
   depth: -0.125
+  corner_compensation: true
   shape: {type: rectangle, origin: [0.25, 0.25], size: [0.5, 1]}
 
 - type: pocket
