@@ -11,8 +11,7 @@
  * options are to have a rounded corner excluding the specified corner, or to
  * cut into the edge a bit more so the corner of the path is included.
  *
- * TODO: cut-into-corners option
- * TODO: more shapes (circle, rounded rectangles, polygons)
+ * TODO: more shapes (rounded rectangles, polygons)
  * TODO: arbitrary paths
  */
 (function() {
@@ -52,6 +51,17 @@
       throw "profile rectangle height must be a positive number";
     }
 
+    // Validate corner compensation options.
+    var cornerCompensation = 0;
+    if (cut.corner_compensation !== undefined) {
+      if (typeof cut.corner_compensation !== "boolean") {
+        throw "profile cornerCompensation is expected to be a boolean";
+      } else if (cut.corner_compensation === true) {
+        var d = workspace.bit_diameter;
+        cornerCompensation = Math.sqrt(d * d * 2) - d;
+      }
+    }
+
     // Since this is a profile cut, we want to be on the side of the lines.
     if (cut.side == "inside") {
       x += workspace.bit_diameter / 2;
@@ -87,9 +97,37 @@
       gcode.push("G1 Z" + z + " F" + workspace.plunge_rate);
       gcode.push("G1 X" + x + " Y" + y + " F" + workspace.feed_rate);
       gcode.push("G1 X" + x + " Y" + (y + height) + " F" + workspace.feed_rate);
+      if (cornerCompensation > 0) {
+        gcode.push("G1" +
+            " X" + (x - cornerCompensation) +
+            " Y" + (y + height + cornerCompensation) +
+            " F" + workspace.feed_rate);
+        gcode.push("G1 X" + x + " Y" + (y + height) + " F" + workspace.feed_rate);
+      }
       gcode.push("G1 X" + (x + width) + " Y" + (y + height) + " F" + workspace.feed_rate);
+      if (cornerCompensation > 0) {
+        gcode.push("G1" +
+            " X" + (x + width + cornerCompensation) +
+            " Y" + (y + height + cornerCompensation) +
+            " F" + workspace.feed_rate);
+        gcode.push("G1 X" + (x + width) + " Y" + (y + height) + " F" + workspace.feed_rate);
+      }
       gcode.push("G1 X" + (x + width) + " Y" + y + " F" + workspace.feed_rate);
+      if (cornerCompensation > 0) {
+        gcode.push("G1" +
+            " X" + (x + width + cornerCompensation) +
+            " Y" + (y - cornerCompensation) +
+            " F" + workspace.feed_rate);
+        gcode.push("G1 X" + (x + width) + " Y" + y + " F" + workspace.feed_rate);
+      }
       gcode.push("G1 X" + x + " Y" + y + " F" + workspace.feed_rate);
+      if (cornerCompensation > 0) {
+        gcode.push("G1" +
+            " X" + (x - cornerCompensation) +
+            " Y" + (y - cornerCompensation) +
+            " F" + workspace.feed_rate);
+        gcode.push("G1 X" + x + " Y" + y + " F" + workspace.feed_rate);
+      }
     }
 
     // Bring the cutter up to a safe movement area.
