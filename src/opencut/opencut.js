@@ -139,9 +139,22 @@ window.opencut = function() {
       }
     }
 
-    // TODO: limit the precision of each command. It makes the lines shorter
-    // and there is really no need to specify billionths of an inch for machines
-    // which are only capable of thousandths.
+    // Limit the precision of each command. It makes the lines shorter and there
+    // is really no need to specify billionths of an inch for machines which are
+    // only capable of thousandths.
+    var MAX_DECIMAL_PLACES = 5;
+    for (var l = 0; l < commands.length; l++) {
+      if (commands[l][0] == "G") {
+        var parts = commands[l].split(" ");
+        for (var m = 0; m < parts.length; m++) {
+          var dot = parts[m].indexOf(".");
+          if (dot != -1 && (dot + MAX_DECIMAL_PLACES + 1) < parts[m].length) {
+            parts[m] = parts[m].substr(0, dot + MAX_DECIMAL_PLACES + 1);
+          }
+        }
+        commands[l] = parts.join(" ");
+      }
+    }
 
     // Warn if any lines exceed 50 characters in length (problem for old grbl boards)
     // http://www.shapeoko.com/wiki/index.php/Grbl#Line_length_limit
