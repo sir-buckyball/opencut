@@ -42,6 +42,7 @@ window.opencut = function() {
    */
   _opencut.toGCode = function(job) {
     var warnings = [];
+    var errors = [];
     var commands = [];
 
     // Build up a workspace description.
@@ -55,7 +56,7 @@ window.opencut = function() {
     workspace.feed_rate = (workspace.units == "mm") ? 100 : 4;
     if (job.feed_rate) {
       if (typeof job.feed_rate != "number") {
-        warnings.push("'feed_rate' is expected to be a number");
+        errors.push("'feed_rate' is expected to be a number");
       } else {
         workspace.feed_rate = job.feed_rate;
       }
@@ -63,7 +64,7 @@ window.opencut = function() {
     workspace.plunge_rate = (workspace.units == "mm") ? 25 : 1;
     if (job.plunge_rate) {
       if (typeof job.plunge_rate != "number") {
-        warnings.push("'plunge_rate' is expected to be a number");
+        errors.push("'plunge_rate' is expected to be a number");
       } else {
         workspace.plunge_rate = job.plunge_rate;
       }
@@ -71,7 +72,7 @@ window.opencut = function() {
     workspace.safety_height = (workspace.units == "mm") ? 5 : 0.25;
     if (job.safety_height) {
       if (typeof job.safety_height != "number") {
-        warnings.push("invalid safety_height: " + job.safety_height);
+        errors.push("invalid safety_height: " + job.safety_height);
       } else {
         workspace.safety_height = job.safety_height;
       }
@@ -81,17 +82,17 @@ window.opencut = function() {
       warnings.push("z_step_size not specified. using default [" + workspace.z_step_size + "]");
     } else {
       if (typeof job.z_step_size != "number") {
-        warnings.push("invalid z_step_size: " + job.z_step_size);
+        errors.push("invalid z_step_size: " + job.z_step_size);
       } else {
         workspace.z_step_size = job.z_step_size;
       }
     }
     if (!job.bit_diameter) {
-      warnings.push("bit_diameter is a required parameter");
+      errors.push("bit_diameter is a required parameter");
     } else if (typeof job.bit_diameter != "number") {
-      warnings.push("bit_diameter is expected to be a number");
+      errors.push("bit_diameter is expected to be a number");
     } else if (job.bit_diameter <= 0) {
-      warnings.push("bit_diameter must be a number greater than 0");
+      errors.push("bit_diameter must be a number greater than 0");
     } else {
       workspace.bit_diameter = job.bit_diameter;
     }
@@ -130,16 +131,17 @@ window.opencut = function() {
           commands.push("; end cut: " + cut.type);
           warnings = warnings.concat(ret.warnings);
         } catch (err) {
-          warnings.push(err);
+          errors.push(err);
           console.error(err);
         }
       } else {
-        warnings.push("unknown cut type [" + cutType + "]");
+        errors.push("unknown cut type [" + cutType + "]");
       }
     }
 
     return {
       "warnings": warnings,
+      "errors": errors,
       "gcode": commands
     };
   };

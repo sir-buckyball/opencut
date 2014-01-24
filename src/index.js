@@ -126,13 +126,16 @@ $(document).ready(function() {
     // Process the job description.
     var processedJob = window.opencut.toGCode(window.job);
 
-    // Display any warnings to the user.
+    // Display any errors/warnings to the user.
+    for (var err = 0; err < processedJob.errors.length; err++) {
+      showWarning(processedJob.errors[err]);
+    }
     for (var j = 0; j < processedJob.warnings.length; j++) {
       showWarning(processedJob.warnings[j]);
     }
 
     // Generate the output.
-    if (processedJob.warnings.length === 0) {
+    if (processedJob.errors.length === 0) {
       window.output = [];
       for (var k = 0; k < processedJob.warnings.length; k++) {
         window.output.push("; WARNING: " + processedJob.warnings[k]);
