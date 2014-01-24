@@ -139,6 +139,22 @@ window.opencut = function() {
       }
     }
 
+    // TODO: limit the precision of each command. It makes the lines shorter
+    // and there is really no need to specify billionths of an inch for machines
+    // which are only capable of thousandths.
+
+    // Warn if any lines exceed 50 characters in length (problem for old grbl boards)
+    // http://www.shapeoko.com/wiki/index.php/Grbl#Line_length_limit
+    var GRBL_LINE_LIMIT = 50;
+    for (var j = 0; j < commands.length; j++) {
+      if (commands[j].length >= GRBL_LINE_LIMIT) {
+        warnings.push("line " + (j + 1) + " of gcode exceeds " +
+            GRBL_LINE_LIMIT + " characters. Old grbl boards will truncate" +
+            " long lines and likely not do what you want.");
+            break;
+      }
+    }
+
     return {
       "warnings": warnings,
       "errors": errors,
