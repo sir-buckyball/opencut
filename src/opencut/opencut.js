@@ -69,6 +69,7 @@ window.opencut = function() {
         workspace.plunge_rate = job.plunge_rate;
       }
     }
+    workspace.z_rapid_rate = 4 * workspace.plunge_rate;
     workspace.safety_height = (workspace.units == "mm") ? 5 : 0.25;
     if (job.safety_height) {
       if (typeof job.safety_height != "number") {

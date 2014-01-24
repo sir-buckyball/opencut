@@ -29,7 +29,7 @@ window.opencut.registerCutType("drill", function generatePathCut(workspace, cut)
   // up, over, down, repeat.
   gcode.push("G90");
   for (var i = 0; i < cut.points.length; i++) {
-    gcode.push("G0 Z" + workspace.safety_height + " F" + workspace.plunge_rate);
+    gcode.push("G1 Z" + workspace.safety_height + " F" + workspace.z_rapid_rate);
     gcode.push("G0" +
         " X" + cut.points[i][0] +
         " Y" + cut.points[i][1] +
@@ -50,7 +50,7 @@ window.opencut.registerCutType("drill", function generatePathCut(workspace, cut)
   }
 
   // go back to the safety height at a rate consistent with out other holes.
-  gcode.push("G0 Z" + workspace.safety_height + " F" + workspace.plunge_rate);
+  gcode.push("G1 Z" + workspace.safety_height + " F" + workspace.z_rapid_rate);
 
   return {
     "warnings": warnings,

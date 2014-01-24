@@ -29,7 +29,7 @@ window.opencut.registerCutType("path", function generatePathCut(workspace, cut) 
 
   // Position over the starting point.
   var z = workspace.safety_height;
-  gcode.push("G0 Z" + z + " F" + workspace.plunge_rate);
+  gcode.push("G1 Z" + z + " F" + workspace.z_rapid_rate);
   gcode.push("G0 X" + cut.points[0][0] + " Y" + cut.points[0][1] +
       " F" + workspace.feed_rate);
 
@@ -58,7 +58,7 @@ window.opencut.registerCutType("path", function generatePathCut(workspace, cut) 
 
   // Bring the cutter up to a safe movement area.
   gcode.push("G1 Z0 F" + workspace.plunge_rate);
-  gcode.push("G0 Z" + workspace.safety_height + " F" + workspace.plunge_rate);
+  gcode.push("G1 Z" + workspace.safety_height + " F" + workspace.z_rapid_rate);
 
   return {
     "warnings": warnings,

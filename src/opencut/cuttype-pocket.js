@@ -72,7 +72,7 @@
     // Move to a safe height, then move over to our starting point.
     var z = workspace.safety_height;
     gcode.push("G90");
-    gcode.push("G0 Z" + z + " F" + workspace.plunge_rate);
+    gcode.push("G1 Z" + z + " F" + workspace.z_rapid_rate);
     gcode.push("G0 X" + originX + " Y" + originY + " F" + workspace.feed_rate);
 
     var numZPasses = Math.ceil(-cut.depth / workspace.z_step_size);
@@ -151,7 +151,7 @@
 
     // Bring the cutter up to a safe movement area.
     gcode.push("G1 Z0 F" + workspace.plunge_rate);
-    gcode.push("G0 Z" + workspace.safety_height);
+    gcode.push("G1 Z" + workspace.safety_height + " F" + workspace.z_rapid_rate);
 
     return {
       "warnings": warnings,
@@ -195,7 +195,7 @@
     // Move to a safe height, then to our starting point.
     var z = workspace.safety_height;
     gcode.push("G90");
-    gcode.push("G0 Z" + z + " F" + workspace.plunge_rate);
+    gcode.push("G1 Z" + z + " F" + workspace.z_rapid_rate);
     gcode.push("G0 X" + x + " Y" + y + " F" + workspace.feed_rate);
 
     var numZPasses = Math.ceil(-cut.depth / workspace.z_step_size);
@@ -233,7 +233,7 @@
 
     // Bring the cutter up to a safe movement area.
     gcode.push("G1 Z0 F" + workspace.plunge_rate);
-    gcode.push("G0 Z" + workspace.safety_height);
+    gcode.push("G1 Z" + workspace.safety_height + " F" + workspace.z_rapid_rate);
 
     return {
       "warnings": warnings,
