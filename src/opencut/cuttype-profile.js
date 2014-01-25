@@ -57,8 +57,8 @@
       if (typeof cut.corner_compensation !== "boolean") {
         throw "profile cornerCompensation is expected to be a boolean";
       } else if (cut.corner_compensation === true && cut.side == "inside") {
-        var d = workspace.bit_diameter;
-        cornerCompensation = Math.sqrt(d * d * 2) - d;
+        var r = workspace.bit_diameter / 2;
+        cornerCompensation = Math.sqrt(r * r * 2) - r;
       }
     }
 
