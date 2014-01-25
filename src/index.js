@@ -151,4 +151,14 @@ $(document).ready(function() {
       window.saveAs(blob, filename);
     }
   });
+
+  // Load up an example file.
+  $.ajax({
+    url : "examples/demo.yaml",
+    dataType: "text",
+    success : function (data) {
+      editor.setValue(data);
+      editor.moveCursorToPosition({row: 0, col: 0});
+    }
+  });
 });
