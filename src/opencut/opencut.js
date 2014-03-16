@@ -98,6 +98,14 @@ window.opencut = function() {
       workspace.bit_diameter = job.bit_diameter;
     }
 
+    if (job.default_depth) {
+      if (typeof job.default_depth != "number" || job.default_depth >= 0) {
+        errors.push("default_depth must be a number < 0");
+      } else {
+        workspace.default_depth = job.default_depth;
+      }
+    }
+
     //debugging
     window.workspace = workspace;
 
@@ -112,6 +120,12 @@ window.opencut = function() {
     }
     for (var i = 0; i < job.cuts.length; i++) {
       var cut = job.cuts[i];
+
+      // Use the workspace default depth if a cut depth was not specified.
+      if (cut.depth === undefined && workspace.default_depth !== undefined) {
+        cut.depth = workspace.default_depth;
+      }
+
       var cutType = cut.type;
       if (_cutTypes[cutType]) {
         try {

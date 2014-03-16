@@ -4,14 +4,13 @@ bit_diameter: 0.125
 feed_rate: 15
 plunge_rate: 5
 z_step_size: 0.1
+default_depth: -0.2
 
 cuts:
 - type: drill
-  depth: -0.2
   points: [[0.9375, 0.75], [0.9375, 0.5], [0.9375, 0.25]]
 
 - type: path
-  depth: -0.2
   points: [[0.9375, 0.0625], [0.0625, 0.0625], [0.0625, 0.9375], [0.9375, 0.9375]]
 
 - type: profile
