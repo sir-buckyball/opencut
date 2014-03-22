@@ -1,5 +1,3 @@
-window.lastLoadedFilename = "unnamed.yaml";
-
 $(document).ready(function() {
   // Helper function to show warnings to the user.
   var showWarning = function(msg) {
@@ -16,6 +14,18 @@ $(document).ready(function() {
     var warningsElement = $("#user-warnings");
     warningsElement.text("");
     warningsElement.hide();
+  };
+
+  // Helper function to parse the YAML input.
+  var parseYaml = function(editor) {
+    var contentLines = [];
+    var lines = editor.getValue().split("\n");
+    for (var i = 0; i < lines.length; i++) {
+      if (lines[i].trim().length > 0) {
+        contentLines.push(lines[i]);
+      }
+    }
+    return window.YAML.parse(contentLines.join("\n"));
   };
 
   // Configure the editor.
@@ -72,7 +82,6 @@ $(document).ready(function() {
     if (files.length > 0) {
       var f = files[0];
       console.log("opening file: " + f.name);
-      window.lastLoadedFilename = f.name;
       var reader = new FileReader();
       reader.onloadend = function(evt) {
         if (evt.target.readyState == FileReader.DONE) {
@@ -95,7 +104,20 @@ $(document).ready(function() {
 
   // Configure the save button
   $("#btn-save-file").click(function(e) {
-    var filename = window.lastLoadedFilename || "unnamed.yaml";
+    clearWarnings();
+
+    // Use the name state in the file if it is available.
+    var filename = "unnamed.yaml";
+    try {
+      var job = parseYaml(editor);
+      if (job.name) {
+        filename = job.name + ".yaml";
+      }
+    } catch (err) {
+      console.warn("document not valid YAML", err);
+      showWarning("document not valid YAML: " + err.message);
+    }
+
     var blob = new Blob([editor.getValue()], {type:"text/x-yaml"});
     console.log("saving file: " + filename);
     window.saveAs(blob, filename);
@@ -103,20 +125,12 @@ $(document).ready(function() {
 
   // Configure the gcode button
   $("#btn-compile-gcode").click(function(e) {
-    // Parse the YAML input.
-    // NOTE: The YAML parser doesn't like blank lines...
-    var contentLines = [];
-    var lines = editor.getValue().split("\n");
-    for (var i = 0; i < lines.length; i++) {
-      if (lines[i].trim().length > 0) {
-        contentLines.push(lines[i]);
-      }
-    }
-
     clearWarnings();
 
+    // Parse the YAML input.
+    // NOTE: The YAML parser doesn't like blank lines...
     try {
-      window.job = window.YAML.parse(contentLines.join("\n"));
+      window.job = parseYaml(editor);
     } catch (err) {
       console.warn("failed to parse YAML", err);
       showWarning("failed to parse YAML: " + err.message);
