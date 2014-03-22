@@ -21,7 +21,7 @@ $(document).ready(function() {
     var contentLines = [];
     var lines = editor.getValue().split("\n");
     for (var i = 0; i < lines.length; i++) {
-      if (lines[i].trim().length > 0) {
+      if (lines[i].split("#", 2)[0].trim().length > 0) {
         contentLines.push(lines[i]);
       }
     }
