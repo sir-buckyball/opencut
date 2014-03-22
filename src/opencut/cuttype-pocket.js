@@ -11,7 +11,6 @@
  * options are to have a rounded corner excluding the specified corner, or to
  * cut into the edge a bit more so the corner of the path is included.
  *
- * TODO: cut-into-corners option
  * TODO: more shapes (rounded rectangles, polygons)
  * TODO: arbitrary paths
  */
@@ -96,8 +95,9 @@
 
       // Make the first cut in the center.
       gcode.push("G90");
-      gcode.push("G1 X" + x + " Y" + y +
-          " Z" + (z + 2 * workspace.z_step_size) + " F" + workspace.feed_rate);
+      gcode.push("G1 Z" + workspace.safety_height + " F" + workspace.z_rapid_rate);
+      gcode.push("G0 X" + x + " Y" + y + " F" + workspace.feed_rate);
+      gcode.push("G1 Z" + (z + 2 * workspace.z_step_size) + " F" + workspace.z_rapid_rate);
       gcode.push("G1 Z" + z + " F" + workspace.plunge_rate);
       gcode.push("G1 X" + (x + width) + " Y" + (y + height) + " F" + workspace.feed_rate);
 
