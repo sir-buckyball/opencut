@@ -27,16 +27,17 @@ window.opencut.registerCutType("path", function generatePathCut(workspace, cut) 
 
   gcode.push("G90");
 
-  // Position over the starting point.
+  // Stay safe.
   var z = workspace.safety_height;
   gcode.push("G1 Z" + z + " F" + workspace.z_rapid_rate);
-  gcode.push("G0 X" + cut.points[0][0] + " Y" + cut.points[0][1] +
-      " F" + workspace.feed_rate);
 
   // Cut the paths.
   var numZPasses = Math.ceil(-cut.depth / workspace.z_step_size);
   for (var k = 0; k < numZPasses; k++) {
-    // Decide how far down to drop.
+    // Rapid move over to the starting point.
+    gcode.push("G0 X" + cut.points[0][0] + " Y" + cut.points[0][1]);
+
+    // Decide how far down to drop and plunge.
     if (z > 0) {
       z = Math.max(cut.depth, -workspace.z_step_size);
     } else {
@@ -52,13 +53,9 @@ window.opencut.registerCutType("path", function generatePathCut(workspace, cut) 
           " F" + workspace.feed_rate);
     }
 
-    // To speed things up, process the list in reverse for the next pass.
-    cut.points = cut.points.reverse();
+    // Bring the cutter up to a safe movement area.
+    gcode.push("G1 Z" + workspace.safety_height + " F" + workspace.z_rapid_rate);
   }
-
-  // Bring the cutter up to a safe movement area.
-  gcode.push("G1 Z0 F" + workspace.plunge_rate);
-  gcode.push("G1 Z" + workspace.safety_height + " F" + workspace.z_rapid_rate);
 
   return {
     "warnings": warnings,
