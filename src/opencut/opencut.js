@@ -117,6 +117,7 @@ window.opencut = function() {
     // Add commands for each cut operation.
     if (!job.cuts || job.cuts.length === 0) {
       warnings.push("no 'cuts' were specified!");
+      job.cuts = [];
     }
     for (var i = 0; i < job.cuts.length; i++) {
       var cut = job.cuts[i];
