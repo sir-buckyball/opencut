@@ -1,4 +1,4 @@
-test("cuttyle-drill tests", function() {
+test("cuttype-drill tests", function() {
   var job = {
   	"name": "test_job",
   	"units": "inch",
