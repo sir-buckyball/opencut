@@ -14,6 +14,7 @@ function ensure() {
 
 
 mkdir -p deps
+mkdir -p testing
 
 # Install our dependencies locally.
 ensure deps/jquery.min.js https://raw2.github.com/components/jquery/master/jquery.min.js
@@ -21,6 +22,8 @@ ensure deps/yaml.min.js https://raw2.github.com/jeremyfa/yaml.js/master/bin/yaml
 ensure deps/ace.js https://raw2.github.com/ajaxorg/ace-builds/master/src-noconflict/ace.js
 ensure deps/mode-yaml.js https://raw2.github.com/ajaxorg/ace-builds/master/src-noconflict/mode-yaml.js
 ensure deps/FileSaver.js https://raw2.github.com/eligrey/FileSaver.js/master/FileSaver.js
+ensure testing/qunit.js http://code.jquery.com/qunit/qunit-1.14.0.js
+ensure testing/qunit.css http://code.jquery.com/qunit/qunit-1.14.0.css
 
 # Dump the js file contents into our dep file.
 # TODO: we should probably version the deps file.
