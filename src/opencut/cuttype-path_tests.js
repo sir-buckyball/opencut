@@ -34,7 +34,8 @@ test("basic gcode test", function() {
 	    "G1 X2 Y3 F10",
 	    "G1 Z0.25 F20",
 	    "; end cut: path"
-	]};
+	  ]
+  };
 
   var results = window.opencut.toGCode(job);
   deepEqual(results, expected);
