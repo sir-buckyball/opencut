@@ -106,10 +106,6 @@ window.opencut = function() {
       }
     }
 
-    //debugging
-    window.workspace = workspace;
-
-
     // Configure the job parameters.
     commands.push("G90"); // Absolute distance mode
     commands.push((workspace.units == "inch") ? "G20" : "G21");
@@ -161,11 +157,24 @@ window.opencut = function() {
     var MAX_DECIMAL_PLACES = 5;
     for (var l = 0; l < commands.length; l++) {
       if (commands[l][0] == "G") {
+        // TODO: gcode does not require spaces, this assumes clean code.
         var parts = commands[l].split(" ");
-        for (var m = 0; m < parts.length; m++) {
-          var dot = parts[m].indexOf(".");
-          if (dot != -1 && (dot + MAX_DECIMAL_PLACES + 1) < parts[m].length) {
-            parts[m] = parts[m].substr(0, dot + MAX_DECIMAL_PLACES + 1);
+        for (var m = 1; m < parts.length; m++) {
+          if (parts[m].length < 2) {
+            continue;
+          }
+          parts[m] = parts[m][0] + parseFloat(parts[m].substr(1)).toFixed(MAX_DECIMAL_PLACES);
+
+          // Remove unnecessary over-specification.
+          if (parts[m].indexOf(".") != -1) {
+            var lst = parts[m].length - 1;
+            while (parts[m][lst] == "0") {
+              lst--;
+            }
+            if (parts[m][lst] == ".") {
+              lst--;
+            }
+            parts[m] = parts[m].substring(0, lst + 1);            
           }
         }
         commands[l] = parts.join(" ");

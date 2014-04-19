@@ -2,29 +2,29 @@ module("cuttype: profile");
 
 test("rectangle inside", function() {
   var job = {
-  	"name": "test_job",
-  	"units": "inch",
-  	"bit_diameter": 0.25,
-  	"feed_rate": 10,
-  	"plunge_rate": 5,
-  	"safety_height": 0,
-  	"z_step_size": 0.1,
-  	"cuts": [{
-		"type": "profile",
-  		"depth": -0.125,
+    "name": "test_job",
+    "units": "inch",
+    "bit_diameter": 0.25,
+    "feed_rate": 10,
+    "plunge_rate": 5,
+    "safety_height": 0,
+    "z_step_size": 0.1,
+    "cuts": [{
+      "type": "profile",
+      "depth": -0.125,
       "side": "inside",
       "shape": {
         "type": "rectangle",
         "origin": [1, 1],
         "size": [0.5, 0.75]
       }
-  	}]
+    }]
   };
 
   var expected = {
-  	"errors": [],
-  	"warnings": [],
-  	"gcode": [
+    "errors": [],
+    "warnings": [],
+    "gcode": [
       "G90",
       "G20",
       "",
@@ -89,13 +89,13 @@ test("rectangle inside corner compensation", function() {
       "G1 Z-0.1 F5",
       "G1 X1.125 Y1.125 F10",
       "G1 X1.125 Y1.625 F10",
-      "G1 X1.07322 Y1.67677 F10",
+      "G1 X1.07322 Y1.67678 F10",
       "G1 X1.125 Y1.625 F10",
       "G1 X1.375 Y1.625 F10",
-      "G1 X1.42677 Y1.67677 F10",
+      "G1 X1.42678 Y1.67678 F10",
       "G1 X1.375 Y1.625 F10",
       "G1 X1.375 Y1.125 F10",
-      "G1 X1.42677 Y1.07322 F10",
+      "G1 X1.42678 Y1.07322 F10",
       "G1 X1.375 Y1.125 F10",
       "G1 X1.125 Y1.125 F10",
       "G1 X1.07322 Y1.07322 F10",
@@ -103,13 +103,13 @@ test("rectangle inside corner compensation", function() {
       "G1 Z-0.125 F5",
       "G1 X1.125 Y1.125 F10",
       "G1 X1.125 Y1.625 F10",
-      "G1 X1.07322 Y1.67677 F10",
+      "G1 X1.07322 Y1.67678 F10",
       "G1 X1.125 Y1.625 F10",
       "G1 X1.375 Y1.625 F10",
-      "G1 X1.42677 Y1.67677 F10",
+      "G1 X1.42678 Y1.67678 F10",
       "G1 X1.375 Y1.625 F10",
       "G1 X1.375 Y1.125 F10",
-      "G1 X1.42677 Y1.07322 F10",
+      "G1 X1.42678 Y1.07322 F10",
       "G1 X1.375 Y1.125 F10",
       "G1 X1.125 Y1.125 F10",
       "G1 X1.07322 Y1.07322 F10",
