@@ -334,3 +334,60 @@ test("circle outside", function() {
   var results = window.opencut.toGCode(job);
   deepEqual(results, expected);
 });
+
+test("points outside", function() {
+  var job = {
+    "name": "test_job",
+    "units": "inch",
+    "bit_diameter": 0.25,
+    "feed_rate": 10,
+    "plunge_rate": 5,
+    "safety_height": 0,
+    "z_step_size": 0.1,
+    "cuts": [{
+      "type": "profile",
+      "depth": -0.125,
+      "side": "outside",
+      "points": [[0, 0], [0, 1], [1, 1], [1, 0], [0, 0]]
+    }]
+  };
+
+  var expected = {
+    "errors": [],
+    "warnings": [],
+    "gcode": [
+      "G90",
+      "G20",
+      "",
+      "; begin cut: profile",
+      "G90",
+      "G1 Z0.25 F20",
+      "G0 X-0.125 Y0 F10",
+      "G1 Z-0.1 F5",
+      "G1 X-0.125 Y1 F10",
+      "G2 X0 Y1.125 I0 J1 F10",
+      "G1 X1 Y1.125 F10",
+      "G2 X1.125 Y1 I1 J1 F10",
+      "G1 X1.125 Y0 F10",
+      "G2 X1 Y-0.125 I1 J0 F10",
+      "G1 X0 Y-0.125 F10",
+      "G2 X-0.125 Y0 I0 J0 F10",
+      "G1 Z0.25 F20",
+      "G0 X-0.125 Y0 F10",
+      "G1 Z-0.125 F5",
+      "G1 X-0.125 Y1 F10",
+      "G2 X0 Y1.125 I0 J1 F10",
+      "G1 X1 Y1.125 F10",
+      "G2 X1.125 Y1 I1 J1 F10",
+      "G1 X1.125 Y0 F10",
+      "G2 X1 Y-0.125 I1 J0 F10",
+      "G1 X0 Y-0.125 F10",
+      "G2 X-0.125 Y0 I0 J0 F10",
+      "G1 Z0.25 F20",
+      "; end cut: profile"
+    ]
+  };
+
+  var results = window.opencut.toGCode(job);
+  deepEqual(results, expected);
+});
