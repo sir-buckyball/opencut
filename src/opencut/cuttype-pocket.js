@@ -96,6 +96,7 @@
       // Make the first cut in the center.
       gcode.push("G90");
       gcode.push("G1 Z" + workspace.safety_height + " F" + workspace.z_rapid_rate);
+      gcode.push("G4 P0");
       gcode.push("G0 X" + x + " Y" + y + " F" + workspace.feed_rate);
       gcode.push("G1 Z" + (z + 2 * workspace.z_step_size) + " F" + workspace.z_rapid_rate);
       gcode.push("G1 Z" + z + " F" + workspace.plunge_rate);
@@ -150,8 +151,8 @@
     }
 
     // Bring the cutter up to a safe movement area.
-    gcode.push("G1 Z0 F" + workspace.plunge_rate);
     gcode.push("G1 Z" + workspace.safety_height + " F" + workspace.z_rapid_rate);
+    gcode.push("G4 P0");
 
     return {
       "warnings": warnings,
@@ -212,6 +213,7 @@
       // Go to the center of the circle, then plunge.
       gcode.push("G1 X" + x + " Y" + y +
           " Z" + (z + 2 * workspace.z_step_size) + " F" + workspace.feed_rate);
+      gcode.push("G4 P0");
       gcode.push("G1 Z" + z + " F" + workspace.plunge_rate);
 
       // Make a bunch of circles radiating outward.
@@ -232,8 +234,8 @@
     }
 
     // Bring the cutter up to a safe movement area.
-    gcode.push("G1 Z0 F" + workspace.plunge_rate);
     gcode.push("G1 Z" + workspace.safety_height + " F" + workspace.z_rapid_rate);
+    gcode.push("G4 P0");
 
     return {
       "warnings": warnings,

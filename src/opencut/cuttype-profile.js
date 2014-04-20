@@ -131,8 +131,8 @@
     }
 
     // Bring the cutter up to a safe movement area.
-    gcode.push("G1 Z0 F" + workspace.plunge_rate);
     gcode.push("G1 Z" + workspace.safety_height + " F" + workspace.z_rapid_rate);
+    gcode.push("G4 P0");
 
     return {
       "warnings": warnings,
@@ -204,8 +204,8 @@
     }
 
     // Bring the cutter up to a safe movement area.
-    gcode.push("G1 Z0 F" + workspace.plunge_rate);
     gcode.push("G1 Z" + workspace.safety_height + " F" + workspace.z_rapid_rate);
+    gcode.push("G4 P0");
 
     return {
       "warnings": warnings,
@@ -340,16 +340,16 @@
             gcode.push("G2" +
                 " X" + (pt[0] - r * Math.cos(a2)) +
                 " Y" + (pt[1] + r * Math.sin(a2)) +
-                " I" + pt[0] +
-                " J" + pt[1] +
+                " I" + (r * Math.cos(a1)) +
+                " J" + (-r * Math.sin(a1)) +
                 " F" + workspace.feed_rate);
           } else if (cut.side == "inside" && cornerAngle < 0) {
             // TODO: arc interpolations over 120˚ are not recommended. split this arc.
             gcode.push("G3" +
                 " X" + (pt[0] - r * Math.cos(a2)) +
                 " Y" + (pt[1] + r * Math.sin(a2)) +
-                " I" + pt[0] +
-                " J" + pt[1] +
+                " I" + (r * Math.cos(a1)) +
+                " J" + (-r * Math.sin(a1)) +
                 " F" + workspace.feed_rate);
           } else {
             // TODO: implement corner-compensation here.
@@ -359,6 +359,7 @@
 
       // Lift the cutter to a safe height before the next round.
       gcode.push("G1 Z" + workspace.safety_height + " F" + workspace.z_rapid_rate);
+      gcode.push("G4 P0");
     }
 
     return {
