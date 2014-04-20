@@ -340,16 +340,16 @@
             gcode.push("G2" +
                 " X" + (pt[0] - r * Math.cos(a2)) +
                 " Y" + (pt[1] + r * Math.sin(a2)) +
-                " I" + pt[0] +
-                " J" + pt[1] +
+                " I" + (r * Math.cos(a1)) +
+                " J" + (-r * Math.sin(a1)) +
                 " F" + workspace.feed_rate);
           } else if (cut.side == "inside" && cornerAngle < 0) {
             // TODO: arc interpolations over 120˚ are not recommended. split this arc.
             gcode.push("G3" +
                 " X" + (pt[0] - r * Math.cos(a2)) +
                 " Y" + (pt[1] + r * Math.sin(a2)) +
-                " I" + pt[0] +
-                " J" + pt[1] +
+                " I" + (r * Math.cos(a1)) +
+                " J" + (-r * Math.sin(a1)) +
                 " F" + workspace.feed_rate);
           } else {
             // TODO: implement corner-compensation here.
