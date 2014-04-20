@@ -55,6 +55,7 @@ window.opencut.registerCutType("path", function generatePathCut(workspace, cut) 
 
     // Bring the cutter up to a safe movement area.
     gcode.push("G1 Z" + workspace.safety_height + " F" + workspace.z_rapid_rate);
+    gcode.push("G4 P0");
   }
 
   return {
