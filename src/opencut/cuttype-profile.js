@@ -131,8 +131,8 @@
     }
 
     // Bring the cutter up to a safe movement area.
-    gcode.push("G1 Z0 F" + workspace.plunge_rate);
     gcode.push("G1 Z" + workspace.safety_height + " F" + workspace.z_rapid_rate);
+    gcode.push("G4 P0");
 
     return {
       "warnings": warnings,
@@ -204,8 +204,8 @@
     }
 
     // Bring the cutter up to a safe movement area.
-    gcode.push("G1 Z0 F" + workspace.plunge_rate);
     gcode.push("G1 Z" + workspace.safety_height + " F" + workspace.z_rapid_rate);
+    gcode.push("G4 P0");
 
     return {
       "warnings": warnings,
@@ -213,9 +213,165 @@
     };
   };
 
+
+  /**
+   * Perform a profile cut following a given path. At the corners, the path
+   * will be extended or reduced to accomodate the bit diameter.
+   */
+  var doPointsCut = function(workspace, cut) {
+    var warnings = [];
+    var gcode = [];
+
+    // Check required parameters.
+    if (cut.points.length < 2) {
+      throw "a path must have at least 2 points";
+    }
+
+    // Remove all repeated points (0 length segments)
+    var prev = cut.points[0];
+    var trimmedPoints = [prev];
+    for (var i = 1; i < cut.points.length; i++) {
+      var p = cut.points[i];
+      if (!(prev[0] == p[0] && prev[1] == p[1])) {
+        prev = p;
+        trimmedPoints.push(p);
+      }
+    }
+    cut.points = trimmedPoints;
+    if (cut.points.length < 2) {
+      throw "a path must have at least 2 distinct points";
+    }
+
+    // We should join the ends if the first and last points are the same.
+    var joinEnds = (cut.points.length > 2 &&
+        cut.points[0][0] == cut.points[cut.points.length - 1][0] &&
+        cut.points[0][1] == cut.points[cut.points.length - 1][1]);
+
+    // Move to roughly where need to be.
+    var z = workspace.safety_height;
+    gcode.push("G90");
+    gcode.push("G1 Z" + workspace.safety_height + " F" + workspace.z_rapid_rate);
+
+    var numZPasses = Math.ceil(-cut.depth / workspace.z_step_size);
+    for (var k = 0; k < numZPasses; k++) {
+      // Decide how far down to drop.
+      if (z <= cut.depth) {
+        break;
+      } else if (z > 0) {
+        z = Math.max(cut.depth, -workspace.z_step_size);
+      } else {
+        z = Math.max(cut.depth, z - workspace.z_step_size);
+      }
+      var didDropDown = false;
+
+      // Start running around the points.
+      var pt = cut.points[0];
+      for (var j = 0; j < cut.points.length; j++) {
+        prev = pt;
+        pt = cut.points[j];
+        var next = cut.points[Math.min(j + 1, cut.points.length - 1)];
+        if (joinEnds) {
+          if (j === 0) {
+            prev = cut.points[cut.points.length - 2];
+          } else if (j + 1 == cut.points.length) {
+            next = cut.points[1];
+          }
+        }
+
+        // Math.atan2 gives the angle of a point from (-PI, PI]
+        var a1 = Math.atan2(pt[0] - prev[0], pt[1] - prev[1]);
+        var a2 = Math.atan2(next[0] - pt[0], next[1] - pt[1]);
+
+        // Determine the angle of the corner, null if there is no corner.
+        var cornerAngle = 0;
+        if (!(prev[0] == pt[0] && prev[1] == pt[1]) &&
+            !(pt[0] == next[0] && pt[1] == next[1])) {
+          cornerAngle = a2 - a1;
+        }
+        if (cornerAngle < -Math.PI) {
+          cornerAngle += 2 * Math.PI;
+        } else if (cornerAngle > Math.PI) {
+          cornerAngle -= 2 * Math.PI;
+        }
+
+        // Convenience variable for the bit radius. We negate it for inside cuts.
+        var r = workspace.bit_diameter / 2;
+        if (cut.side == "inside") {
+          r *= -1;
+        }
+
+        if (!didDropDown) {
+          didDropDown = true;
+          if ((cut.side == "outside" && cornerAngle < 0) ||
+              (cut.side == "inside" && cornerAngle > 0)) {
+            r = r / Math.sin(cornerAngle / 2);
+            gcode.push("G0" +
+              " X" + (pt[0] - r * Math.cos(a1 + cornerAngle / 2)) +
+              " Y" + (pt[1] + r * Math.sin(a1 + cornerAngle / 2)) +
+              " F" + workspace.feed_rate);
+          } else {
+            gcode.push("G0" +
+                " X" + (pt[0] - r * Math.cos(a2)) +
+                " Y" + (pt[1] + r * Math.sin(a2)) +
+                " F" + workspace.feed_rate);
+          }
+          gcode.push("G1 Z" + z + " F" + workspace.plunge_rate);
+          continue;
+        }
+
+        if ((cut.side == "outside" && cornerAngle < 0) ||
+            (cut.side == "inside" && cornerAngle > 0)) {
+          var dist = r / Math.sin(cornerAngle / 2);
+          gcode.push("G1" +
+              " X" + (pt[0] - dist * Math.cos(a1 + cornerAngle / 2)) +
+              " Y" + (pt[1] + dist * Math.sin(a1 + cornerAngle / 2)) +
+              " F" + workspace.feed_rate);
+        } else {
+          gcode.push("G1" +
+              " X" + (pt[0] - r * Math.cos(a1)) +
+              " Y" + (pt[1] + r * Math.sin(a1)) +
+              " F" + workspace.feed_rate);
+        }
+
+        // When we are on the outside of a curve, we need to arc around the corner to keep it sharp.
+        if (!(pt[0] == next[0] && pt[1] == next[1])) {
+          if (cut.side == "outside" && cornerAngle > 0) {
+            // TODO: arc interpolations over 120˚ are not recommended. split this arc.
+            gcode.push("G2" +
+                " X" + (pt[0] - r * Math.cos(a2)) +
+                " Y" + (pt[1] + r * Math.sin(a2)) +
+                " I" + (r * Math.cos(a1)) +
+                " J" + (-r * Math.sin(a1)) +
+                " F" + workspace.feed_rate);
+          } else if (cut.side == "inside" && cornerAngle < 0) {
+            // TODO: arc interpolations over 120˚ are not recommended. split this arc.
+            gcode.push("G3" +
+                " X" + (pt[0] - r * Math.cos(a2)) +
+                " Y" + (pt[1] + r * Math.sin(a2)) +
+                " I" + (r * Math.cos(a1)) +
+                " J" + (-r * Math.sin(a1)) +
+                " F" + workspace.feed_rate);
+          } else {
+            // TODO: implement corner-compensation here.
+          }
+        }
+      }
+
+      // Lift the cutter to a safe height before the next round.
+      gcode.push("G1 Z" + workspace.safety_height + " F" + workspace.z_rapid_rate);
+      gcode.push("G4 P0");
+    }
+
+    return {
+      "warnings": warnings,
+      "gcode": gcode
+    };
+  };
+
+
   window.opencut.registerCutType("profile", function generatePathCut(workspace, cut) {
-    if (cut.points !== undefined) {
-      throw "profile cuts for a sequence of points is not implemented";
+    if (cut.points !== undefined && cut.shape !== undefined && cut.shape.type !== undefined) {
+      throw "cut points and shape are mutually exclusive.";
     }
 
     if (cut.depth === undefined || typeof cut.depth != "number" || cut.depth >= 0) {
@@ -226,6 +382,10 @@
       throw "profile cut side [inside/outside] not specified";
     } else if (cut.side != "inside" && cut.side != "outside") {
       throw "unknown profile cut side [" + cut.side + "], expected 'inside' or 'outside'";
+    }
+
+    if (cut.points !== undefined) {
+      return doPointsCut(workspace, cut);
     }
 
     if (cut.shape === undefined || cut.shape === null) {
