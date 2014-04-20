@@ -265,7 +265,6 @@
       var didDropDown = false;
 
       // Start running around the points.
-      // TODO: Z movement calculations.
       var pt = cut.points[0];
       for (var j = 0; j < cut.points.length; j++) {
         prev = pt;
@@ -305,7 +304,11 @@
           didDropDown = true;
           if ((cut.side == "outside" && cornerAngle < 0) ||
               (cut.side == "inside" && cornerAngle > 0)) {
-            // TODO: we need to actually move to the intersection of the insides.
+            r = r / Math.sin(cornerAngle / 2);
+            gcode.push("G0" +
+              " X" + (pt[0] - r * Math.cos(a1 + cornerAngle / 2)) +
+              " Y" + (pt[1] + r * Math.sin(a1 + cornerAngle / 2)) +
+              " F" + workspace.feed_rate);
           } else {
             gcode.push("G0" +
                 " X" + (pt[0] - r * Math.cos(a2)) +
@@ -318,7 +321,11 @@
 
         if ((cut.side == "outside" && cornerAngle < 0) ||
             (cut.side == "inside" && cornerAngle > 0)) {
-          // TODO: we need to actually move to the intersection of the insides.
+          var dist = r / Math.sin(cornerAngle / 2);
+          gcode.push("G1" +
+              " X" + (pt[0] - dist * Math.cos(a1 + cornerAngle / 2)) +
+              " Y" + (pt[1] + dist * Math.sin(a1 + cornerAngle / 2)) +
+              " F" + workspace.feed_rate);
         } else {
           gcode.push("G1" +
               " X" + (pt[0] - r * Math.cos(a1)) +
@@ -329,7 +336,7 @@
         // When we are on the outside of a curve, we need to arc around the corner to keep it sharp.
         if (!(pt[0] == next[0] && pt[1] == next[1])) {
           if (cut.side == "outside" && cornerAngle > 0) {
-            // TODO: split the arc in two so not to exceed 90 degrees (too much error accumulation)
+            // TODO: arc interpolations over 120˚ are not recommended. split this arc.
             gcode.push("G2" +
                 " X" + (pt[0] - r * Math.cos(a2)) +
                 " Y" + (pt[1] + r * Math.sin(a2)) +
@@ -337,7 +344,7 @@
                 " J" + pt[1] +
                 " F" + workspace.feed_rate);
           } else if (cut.side == "inside" && cornerAngle < 0) {
-            // TODO: split the arc in two so not to exceed 90 degrees (too much error accumulation)
+            // TODO: arc interpolations over 120˚ are not recommended. split this arc.
             gcode.push("G3" +
                 " X" + (pt[0] - r * Math.cos(a2)) +
                 " Y" + (pt[1] + r * Math.sin(a2)) +
