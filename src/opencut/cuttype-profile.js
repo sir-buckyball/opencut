@@ -321,7 +321,8 @@
 
         if ((cut.side == "outside" && cornerAngle < 0) ||
             (cut.side == "inside" && cornerAngle > 0)) {
-          var dist = r / Math.sin(cornerAngle / 2);
+          var c = (cut.side == "outside") ? Math.PI + cornerAngle : cornerAngle; 
+          var dist = r / Math.sin(c / 2);
           gcode.push("G1" +
               " X" + (pt[0] - dist * Math.cos(a1 + cornerAngle / 2)) +
               " Y" + (pt[1] + dist * Math.sin(a1 + cornerAngle / 2)) +

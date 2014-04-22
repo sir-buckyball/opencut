@@ -415,7 +415,7 @@ test("points S outside", function() {
       "G1 Z-0.1 F5",
       "G1 X0.8882 Y2.0559 F10",
       "G2 X1.1118 Y2.0559 I0.1118 J-0.0559 F10",
-      "G1 X2 Y-0.13975 F10",
+      "G1 X2 Y0.27951 F10",
       "G1 X2.8882 Y2.0559 F10",
       "G1 Z0.25 F20",
       "G4 P0",
@@ -461,6 +461,48 @@ test("points S inside", function() {
       "G3 X2.1118 Y-0.0559 I0.1118 J0.0559 F10",
       "G1 X3.1118 Y1.9441 F10",
       "G1 Z0.25 F20",
+      "G4 P0",
+      "; end cut: profile"
+    ]
+  };
+
+  var results = window.opencut.toGCode(job);
+  deepEqual(results, expected);
+});
+
+test("points U outside cuts inside", function() {
+  var job = {
+    "name": "test_job",
+    "units": "mm",
+    "bit_diameter": 2,
+    "feed_rate": 10,
+    "plunge_rate": 5,
+    "safety_height": 0,
+    "z_step_size": 0.1,
+    "cuts": [{
+      "type": "profile",
+      "depth": -0.1,
+      "side": "outside",
+      "points": [[10, 10], [10, 5], [20, 5], [20, 10]]
+    }]
+  };
+
+  var expected = {
+    "errors": [],
+    "warnings": [],
+    "gcode": [
+      "G90",
+      "G21",
+      "",
+      "; begin cut: profile",
+      "G90",
+      "G1 Z5 F20",
+      "G0 X11 Y10 F10",
+      "G1 Z-0.1 F5",
+      "G1 X11 Y6 F10",
+      "G1 X19 Y6 F10",
+      "G1 X19 Y10 F10",
+      "G1 Z5 F20",
       "G4 P0",
       "; end cut: profile"
     ]
