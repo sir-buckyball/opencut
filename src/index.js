@@ -57,6 +57,14 @@ $(document).ready(function() {
     },
     readOnly: true
   });
+  editor.commands.addCommand({
+    name: "preview",
+    bindKey: {win:"Ctrl-P", mac: "Command-P"},
+    exec: function(editor) {
+      $("#btn-preview").click()
+    },
+    readOnly: true
+  });
   editor.focus();
 
   $(window).resize(function() {
@@ -164,6 +172,24 @@ $(document).ready(function() {
       console.log("saving file: " + filename);
       window.saveAs(blob, filename);
     }
+  });
+
+  // To preview, open a new window and send along the current editor contents.
+  var previewPopup = null;
+  $("#btn-preview").click(function(e) {
+    if (!previewPopup || !previewPopup.location) {
+      console.log("opening preview window.");
+      previewPopup = window.open("render.html");
+      $(previewPopup).ready(function() {
+        setTimeout(function() {
+          previewPopup.postMessage(editor.getValue(), "*");
+        }, 50);
+      })
+    } else {
+      previewPopup.postMessage(editor.getValue(), "*");
+      previewPopup.focus();
+    }
+    window.pp = previewPopup;
   });
 
   // Load up an example file.
