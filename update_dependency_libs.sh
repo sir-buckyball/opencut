@@ -37,3 +37,18 @@ echo "building src/index-deps.js"
   cat deps/yaml.min.js >> src/index-deps.js
   cat deps/FileSaver.js >> src/index-deps.js
 )
+
+
+# Unpack dependencies for the rendering code.
+ensure deps/paperjs-v0.9.18.zip http://paperjs.org/download/paperjs-v0.9.18.zip
+mkdir -p deps/paperjs
+unzip -d deps/paperjs/ deps/paperjs-v0.9.18.zip dist/paper-core.min.js
+
+echo "building src/render-deps.js"
+(
+  set -x
+  cat deps/jquery.min.js > src/render-deps.js
+  cat deps/yaml.min.js >> src/render-deps.js
+  cat deps/FileSaver.js >> src/render-deps.js
+  cat deps/paperjs/dist/paper-core.min.js >> src/render-deps.js
+)
