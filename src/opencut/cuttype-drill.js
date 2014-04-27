@@ -1,8 +1,6 @@
 /**
  * Generate the gcode for a drill cut. This type of cut will drill holes at the
  * prescribed points.
- *
- * TODO: implement pecking
  */
 window.opencut.registerCutType("drill", function generatePathCut(workspace, cut) {
   var warnings = [];
@@ -46,7 +44,7 @@ window.opencut.registerCutType("drill", function generatePathCut(workspace, cut)
         z = Math.max(cut.depth, z - workspace.z_step_size);
       }
       gcode.push("G1 Z" + z + " F" + workspace.plunge_rate);
-      gcode.push("G1 Z0");
+      gcode.push("G1 Z0 F" + workspace.z_rapid_rate);
     }
   }
 
