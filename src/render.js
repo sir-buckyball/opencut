@@ -1,8 +1,8 @@
 function resizeView() {
-  var minX = -1;
-  var minY = -1;
-  var maxX = 1;
-  var maxY = 1;
+  var minX = -0.01;
+  var minY = -0.01;
+  var maxX = 0.01;
+  var maxY = 0.01;
   var allItems = paper.project.getItems();
   for (var k = 0; k < allItems.length; k++) {
     var bounds = allItems[k].getBounds();
