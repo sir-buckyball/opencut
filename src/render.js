@@ -24,7 +24,7 @@ function renderYaml(txt) {
   paper.project.clear();
 
   // parse the YAML.
-  var obj = function(t) {
+  var job = function(t) {
     // Sadly, the YAML parser doesn't deal with comments nicely.
     var contentLines = [];
     var lines = txt.split("\n");
@@ -38,11 +38,17 @@ function renderYaml(txt) {
 
   // Render the shapes which the cuts will be centered around.
   var cutShapes = new paper.Group();
-  for (var i = 0; i < obj.cuts.length; i++) {
-    var cut = obj.cuts[i];
+  for (var i = 0; i < job.cuts.length; i++) {
+    var cut = job.cuts[i];
     if (cut.points && cut.points.length > 0) {
       if (cut.type == "drill") {
-        console.log("TODO: implement drill cuts");
+        for (var k = 0; k < cut.points.length; k++) {
+          var drillSpot = new paper.Shape.Circle(
+            new paper.Point(cut.points[k]), job.bit_diameter / 2);
+          drillSpot.strokeColor = "black";
+          drillSpot.fillColor = "grey";
+          cutShapes.addChild(drillSpot);
+        }
       } else {
         var path = new paper.Path();
         path.moveTo(new paper.Point(cut.points[0]));
