@@ -64,6 +64,10 @@ function renderYaml(txt) {
         console.log("unknown shape: " + cut.shape.type);
       }
     }
+
+    if (cutShapes.lastChild) {
+      cutShapes.lastChild.strokeColor = (cut.color !== undefined) ? cut.color : "black";
+    }
   }
 
   // Invert everything (to move the origin to the bottom left).
@@ -73,10 +77,7 @@ function renderYaml(txt) {
 
   // The view must be resized before setting the stroke width
   // so we know how wide to stroke.
-  cutShapes.style = {
-    strokeColor: "black",
-    strokeWidth: 1 / paper.view.getZoom(),
-  };
+  cutShapes.style.strokeWidth = 1 / paper.view.getZoom();
 
   paper.view.draw();
   console.timeEnd("render YAML");
