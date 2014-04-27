@@ -66,6 +66,9 @@ function renderYaml(txt) {
     }
   }
 
+  // Invert everything (to move the origin to the bottom left).
+  cutShapes.scale(1, -1);
+
   resizeView();
 
   // The view must be resized before setting the stroke width
