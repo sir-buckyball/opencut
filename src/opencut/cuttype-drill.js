@@ -38,6 +38,9 @@ window.opencut.registerCutType("drill", function generatePathCut(workspace, cut)
     var z = Math.max(0, cut.depth);
     var numZPasses = Math.ceil(-cut.depth / workspace.z_step_size);
     for (var k = 0; k < numZPasses; k++) {
+      if (k > 0) {
+        gcode.push("G1 Z" + z + " F" + workspace.z_rapid_rate);
+      }
       if (z > 0) {
         z = Math.max(cut.depth, -workspace.z_step_size);
       } else {
