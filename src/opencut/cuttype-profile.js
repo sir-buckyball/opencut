@@ -322,20 +322,16 @@
           continue;
         }
 
+        var toX = pt[0] - r * Math.cos(a1);
+        var toY = pt[1] + r * Math.sin(a1);
         if ((cut.side == "outside" && cornerAngle < 0) ||
             (cut.side == "inside" && cornerAngle > 0)) {
           var c = (cut.side == "outside") ? Math.PI + cornerAngle : cornerAngle; 
           var dist = r / Math.sin(c / 2);
-          gcode.push("G1" +
-              " X" + (pt[0] - dist * Math.cos(a1 + cornerAngle / 2)) +
-              " Y" + (pt[1] + dist * Math.sin(a1 + cornerAngle / 2)) +
-              " F" + workspace.feed_rate);
-        } else {
-          gcode.push("G1" +
-              " X" + (pt[0] - r * Math.cos(a1)) +
-              " Y" + (pt[1] + r * Math.sin(a1)) +
-              " F" + workspace.feed_rate);
+          toX = pt[0] - dist * Math.cos(a1 + cornerAngle / 2);
+          toY = pt[1] + dist * Math.sin(a1 + cornerAngle / 2);
         }
+        gcode.push("G1 X" + toX + " Y" + toY + " F" + workspace.feed_rate);
 
         // When we are on the outside of a curve, we need to arc around the corner to keep it sharp.
         if (!(pt[0] == next[0] && pt[1] == next[1])) {
@@ -356,7 +352,15 @@
                 " J" + (-r * Math.sin(a1)) +
                 " F" + workspace.feed_rate);
           } else {
-            // TODO: implement corner-compensation here.
+            // Cut to the corner if compensation is enabled.
+            if (cut.corner_compensation === true) {
+              var dx = pt[0] - toX;
+              var dy = pt[1] - toY;
+              var mag = (workspace.bit_diameter / 2) / Math.sqrt(dx * dx + dy * dy);
+              gcode.push("G1 X" + (pt[0] - (dx * mag)) + " Y" + (pt[1] - (dy * mag)) +
+                  " F" + workspace.feed_rate);
+              gcode.push("G1 X" + toX + " Y" + toY + " F" + workspace.feed_rate);
+            }
           }
         }
       }

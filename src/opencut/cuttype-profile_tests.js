@@ -523,3 +523,69 @@ test("points U outside cuts inside", function() {
   var results = window.opencut.toGCode(job);
   deepEqual(results, expected);
 });
+
+test("points inside corner compensation", function() {
+  var job = {
+    "name": "test_job",
+    "units": "inch",
+    "bit_diameter": 0.25,
+    "feed_rate": 10,
+    "plunge_rate": 5,
+    "safety_height": 0,
+    "z_step_size": 0.1,
+    "cuts": [{
+    "type": "profile",
+      "depth": -0.125,
+      "side": "inside",
+      "corner_compensation": true,
+      "points": [[1, 1], [1, 1.75], [1.5, 1.75], [1.5, 1], [1, 1]]
+    }]
+  };
+
+  var expected = {
+    "errors": [],
+    "warnings": [],
+    "gcode": [
+      "G90",
+      "G20",
+      "",
+      "; begin cut: profile",
+      "G90",
+      "G1 Z0.25 F20",
+      "G0 X1.125 Y1.125 F10",
+      "G1 Z-0.1 F5",
+      "G1 X1.125 Y1.625 F10",
+      "G1 X1.08839 Y1.66161 F10",
+      "G1 X1.125 Y1.625 F10",
+      "G1 X1.375 Y1.625 F10",
+      "G1 X1.41161 Y1.66161 F10",
+      "G1 X1.375 Y1.625 F10",
+      "G1 X1.375 Y1.125 F10",
+      "G1 X1.41161 Y1.08839 F10",
+      "G1 X1.375 Y1.125 F10",
+      "G1 X1.125 Y1.125 F10",
+      "G1 X1.08839 Y1.08839 F10",
+      "G1 X1.125 Y1.125 F10",
+      "G4 P0",
+      "G1 Z-0.125 F5",
+      "G1 X1.125 Y1.625 F10",
+      "G1 X1.08839 Y1.66161 F10",
+      "G1 X1.125 Y1.625 F10",
+      "G1 X1.375 Y1.625 F10",
+      "G1 X1.41161 Y1.66161 F10",
+      "G1 X1.375 Y1.625 F10",
+      "G1 X1.375 Y1.125 F10",
+      "G1 X1.41161 Y1.08839 F10",
+      "G1 X1.375 Y1.125 F10",
+      "G1 X1.125 Y1.125 F10",
+      "G1 X1.08839 Y1.08839 F10",
+      "G1 X1.125 Y1.125 F10",
+      "G1 Z0.25 F20",
+      "G4 P0",
+      "; end cut: profile"
+    ]
+  };
+
+  var results = window.opencut.toGCode(job);
+  deepEqual(results, expected);
+});
