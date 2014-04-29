@@ -362,15 +362,9 @@
       }
 
       // Lift the cutter to a safe height before the next round.
-      if (!joinEnds) {
+      if (!joinEnds || k == numZPasses - 1) {
         gcode.push("G1 Z" + workspace.safety_height + " F" + workspace.z_rapid_rate);
       }
-      gcode.push("G4 P0");
-    }
-
-    // For end-joined cuts, we need to lift the cutter.
-    if (joinEnds) {
-      gcode.push("G1 Z" + workspace.safety_height + " F" + workspace.z_rapid_rate);
       gcode.push("G4 P0");
     }
 

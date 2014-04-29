@@ -329,7 +329,6 @@ test("points loop outside", function() {
       "G2 X1 Y-0.125 I-0.125 J-0 F10",
       "G1 X0 Y-0.125 F10",
       "G2 X-0.125 Y0 I0 J0.125 F10",
-      "G4 P0",
       "G1 Z0.25 F20",
       "G4 P0",
       "; end cut: profile"
@@ -379,7 +378,6 @@ test("points loop inside", function() {
       "G1 X0.875 Y0.875 F10",
       "G1 X0.875 Y0.125 F10",
       "G1 X0.125 Y0.125 F10",
-      "G4 P0",
       "G1 Z0.25 F20",
       "G4 P0",
       "; end cut: profile"
