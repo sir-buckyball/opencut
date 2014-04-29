@@ -302,18 +302,21 @@
 
         if (!didDropDown) {
           didDropDown = true;
-          if ((cut.side == "outside" && cornerAngle < 0) ||
-              (cut.side == "inside" && cornerAngle > 0)) {
-            r = r / Math.sin(cornerAngle / 2);
-            gcode.push("G0" +
-              " X" + (pt[0] - r * Math.cos(a1 + cornerAngle / 2)) +
-              " Y" + (pt[1] + r * Math.sin(a1 + cornerAngle / 2)) +
-              " F" + workspace.feed_rate);
-          } else {
-            gcode.push("G0" +
-                " X" + (pt[0] - r * Math.cos(a2)) +
-                " Y" + (pt[1] + r * Math.sin(a2)) +
+          // For end-joined cuts, we are already in position.
+          if (!joinEnds || k == 0) {
+            if ((cut.side == "outside" && cornerAngle < 0) ||
+                (cut.side == "inside" && cornerAngle > 0)) {
+              r = r / Math.sin(cornerAngle / 2);
+              gcode.push("G0" +
+                " X" + (pt[0] - r * Math.cos(a1 + cornerAngle / 2)) +
+                " Y" + (pt[1] + r * Math.sin(a1 + cornerAngle / 2)) +
                 " F" + workspace.feed_rate);
+            } else {
+              gcode.push("G0" +
+                  " X" + (pt[0] - r * Math.cos(a2)) +
+                  " Y" + (pt[1] + r * Math.sin(a2)) +
+                  " F" + workspace.feed_rate);
+            }
           }
           gcode.push("G1 Z" + z + " F" + workspace.plunge_rate);
           continue;
@@ -359,6 +362,14 @@
       }
 
       // Lift the cutter to a safe height before the next round.
+      if (!joinEnds) {
+        gcode.push("G1 Z" + workspace.safety_height + " F" + workspace.z_rapid_rate);
+      }
+      gcode.push("G4 P0");
+    }
+
+    // For end-joined cuts, we need to lift the cutter.
+    if (joinEnds) {
       gcode.push("G1 Z" + workspace.safety_height + " F" + workspace.z_rapid_rate);
       gcode.push("G4 P0");
     }

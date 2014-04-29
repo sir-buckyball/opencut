@@ -319,9 +319,7 @@ test("points loop outside", function() {
       "G2 X1 Y-0.125 I-0.125 J-0 F10",
       "G1 X0 Y-0.125 F10",
       "G2 X-0.125 Y0 I0 J0.125 F10",
-      "G1 Z0.25 F20",
       "G4 P0",
-      "G0 X-0.125 Y0 F10",
       "G1 Z-0.125 F5",
       "G1 X-0.125 Y1 F10",
       "G2 X0 Y1.125 I0.125 J0 F10",
@@ -331,6 +329,7 @@ test("points loop outside", function() {
       "G2 X1 Y-0.125 I-0.125 J-0 F10",
       "G1 X0 Y-0.125 F10",
       "G2 X-0.125 Y0 I0 J0.125 F10",
+      "G4 P0",
       "G1 Z0.25 F20",
       "G4 P0",
       "; end cut: profile"
@@ -352,7 +351,7 @@ test("points loop inside", function() {
     "z_step_size": 0.1,
     "cuts": [{
       "type": "profile",
-      "depth": -0.1,
+      "depth": -0.15,
       "side": "inside",
       "points": [[0, 0], [0, 1], [1, 1], [1, 0], [0, 0]]
     }]
@@ -374,6 +373,13 @@ test("points loop inside", function() {
       "G1 X0.875 Y0.875 F10",
       "G1 X0.875 Y0.125 F10",
       "G1 X0.125 Y0.125 F10",
+      "G4 P0",
+      "G1 Z-0.15 F5",
+      "G1 X0.125 Y0.875 F10",
+      "G1 X0.875 Y0.875 F10",
+      "G1 X0.875 Y0.125 F10",
+      "G1 X0.125 Y0.125 F10",
+      "G4 P0",
       "G1 Z0.25 F20",
       "G4 P0",
       "; end cut: profile"
@@ -395,7 +401,7 @@ test("points S outside", function() {
     "z_step_size": 0.1,
     "cuts": [{
       "type": "profile",
-      "depth": -0.1,
+      "depth": -0.2,
       "side": "outside",
       "points": [[0, 0], [1, 2], [2, 0], [3, 2]]
     }]
@@ -413,6 +419,14 @@ test("points S outside", function() {
       "G1 Z0.25 F20",
       "G0 X-0.1118 Y0.0559 F10",
       "G1 Z-0.1 F5",
+      "G1 X0.8882 Y2.0559 F10",
+      "G2 X1.1118 Y2.0559 I0.1118 J-0.0559 F10",
+      "G1 X2 Y0.27951 F10",
+      "G1 X2.8882 Y2.0559 F10",
+      "G1 Z0.25 F20",
+      "G4 P0",
+      "G0 X-0.1118 Y0.0559 F10",
+      "G1 Z-0.2 F5",
       "G1 X0.8882 Y2.0559 F10",
       "G2 X1.1118 Y2.0559 I0.1118 J-0.0559 F10",
       "G1 X2 Y0.27951 F10",
