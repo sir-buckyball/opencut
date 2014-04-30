@@ -19,9 +19,6 @@
    * Cutting function for rectangular shapes.
    */
   var doRectangleCut = function(workspace, cut) {
-    var warnings = [];
-    var gcode = [];
-
     // Check required parameters.
     if (cut.shape.origin === undefined || cut.shape.origin === null) {
       throw "profile rectangle 'origin' not defined";
@@ -51,93 +48,15 @@
       throw "profile rectangle height must be a positive number";
     }
 
-    // Validate corner compensation options.
-    var cornerCompensation = 0;
-    if (cut.corner_compensation !== undefined) {
-      if (typeof cut.corner_compensation !== "boolean") {
-        throw "profile cornerCompensation is expected to be a boolean";
-      } else if (cut.corner_compensation === true && cut.side == "inside") {
-        var r = workspace.bit_diameter / 2;
-        cornerCompensation = r - r / Math.sqrt(2);
-      }
-    }
-
-    // Since this is a profile cut, we want to be on the side of the lines.
-    if (cut.side == "inside") {
-      x += workspace.bit_diameter / 2;
-      y += workspace.bit_diameter / 2;
-      width -= workspace.bit_diameter;
-      height -= workspace.bit_diameter;
-    } else {
-      x -= workspace.bit_diameter / 2;
-      y -= workspace.bit_diameter / 2;
-      width += workspace.bit_diameter;
-      height += workspace.bit_diameter;
-    }
-
-    // Move to a safe height, then move over to our starting point.
-    var z = workspace.safety_height;
-    gcode.push("G90");
-    gcode.push("G1 Z" + z + " F" + workspace.z_rapid_rate);
-    gcode.push("G0 X" + x + " Y" + y + " F" + workspace.feed_rate);
-
-    var numZPasses = Math.ceil(-cut.depth / workspace.z_step_size);
-    for (var k = 0; k < numZPasses; k++) {
-
-      // Decide how far down to drop.
-      if (z <= cut.depth) {
-        break;
-      } else if (z > 0) {
-        z = Math.max(cut.depth, -workspace.z_step_size);
-      } else {
-        z = Math.max(cut.depth, z - workspace.z_step_size);
-      }
-
-      // Drop down, go around.
-      gcode.push("G1 Z" + z + " F" + workspace.plunge_rate);
-      gcode.push("G1 X" + x + " Y" + y + " F" + workspace.feed_rate);
-      gcode.push("G1 X" + x + " Y" + (y + height) + " F" + workspace.feed_rate);
-      if (cornerCompensation > 0) {
-        gcode.push("G1" +
-            " X" + (x - cornerCompensation) +
-            " Y" + (y + height + cornerCompensation) +
-            " F" + workspace.feed_rate);
-        gcode.push("G1 X" + x + " Y" + (y + height) + " F" + workspace.feed_rate);
-      }
-      gcode.push("G1 X" + (x + width) + " Y" + (y + height) + " F" + workspace.feed_rate);
-      if (cornerCompensation > 0) {
-        gcode.push("G1" +
-            " X" + (x + width + cornerCompensation) +
-            " Y" + (y + height + cornerCompensation) +
-            " F" + workspace.feed_rate);
-        gcode.push("G1 X" + (x + width) + " Y" + (y + height) + " F" + workspace.feed_rate);
-      }
-      gcode.push("G1 X" + (x + width) + " Y" + y + " F" + workspace.feed_rate);
-      if (cornerCompensation > 0) {
-        gcode.push("G1" +
-            " X" + (x + width + cornerCompensation) +
-            " Y" + (y - cornerCompensation) +
-            " F" + workspace.feed_rate);
-        gcode.push("G1 X" + (x + width) + " Y" + y + " F" + workspace.feed_rate);
-      }
-      gcode.push("G1 X" + x + " Y" + y + " F" + workspace.feed_rate);
-      if (cornerCompensation > 0) {
-        gcode.push("G1" +
-            " X" + (x - cornerCompensation) +
-            " Y" + (y - cornerCompensation) +
-            " F" + workspace.feed_rate);
-        gcode.push("G1 X" + x + " Y" + y + " F" + workspace.feed_rate);
-      }
-    }
-
-    // Bring the cutter up to a safe movement area.
-    gcode.push("G1 Z" + workspace.safety_height + " F" + workspace.z_rapid_rate);
-    gcode.push("G4 P0");
-
-    return {
-      "warnings": warnings,
-      "gcode": gcode
-    };
+    // Delegate to the points cut.
+    delete cut.shape;
+    cut.points = [
+      [x, y],
+      [x, y + height],
+      [x + width, y + height],
+      [x + width, y],
+      [x, y]];
+    return doPointsCut(workspace, cut);
   };
 
   /**
