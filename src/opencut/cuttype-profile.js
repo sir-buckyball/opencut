@@ -56,6 +56,13 @@
       [x + width, y + height],
       [x + width, y],
       [x, y]];
+
+    // Outside profile cuts are best done counter-clockwise.
+    if (cut.side == "outside") {
+      cut.points.reverse();
+      cut.side = "inside";
+    }
+
     return doPointsCut(workspace, cut);
   };
 
