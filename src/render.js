@@ -65,7 +65,7 @@ function renderYaml(txt) {
           new paper.Point(cut.shape.center), cut.shape.radius));
       } else if (cut.shape.type == "rectangle") {
         cutShapes.addChild(new paper.Shape.Rectangle(
-          new paper.Point(cut.shape.origin), new paper.Point(cut.shape.size)));
+          new paper.Point(cut.shape.origin), new paper.Size(cut.shape.size)));
       } else {
         console.log("unknown shape: " + cut.shape.type);
       }
