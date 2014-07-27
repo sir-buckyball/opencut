@@ -192,6 +192,13 @@ $(document).ready(function() {
     window.pp = previewPopup;
   });
 
+  // Listen for posted messages
+  window.addEventListener("message", function(event) {
+    console.log("a message got past my tin hat!\n" + event.data);
+    editor.setValue(event.data);
+    editor.moveCursorToPosition({row: 0, col: 0});
+  }, false);
+
   // Load up an example file.
   $.ajax({
     url : "examples/demo.yaml",
