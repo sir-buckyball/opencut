@@ -594,3 +594,171 @@ test("points inside corner compensation", function() {
   var results = window.opencut.toGCode(job);
   deepEqual(results, expected);
 });
+
+test("points triangle outside", function() {
+  var job = {
+    "name": "test_job",
+    "units": "inch",
+    "bit_diameter": 0.25,
+    "feed_rate": 10,
+    "plunge_rate": 5,
+    "safety_height": 0,
+    "z_step_size": 0.1,
+    "cuts": [{
+      "type": "profile",
+      "depth": -0.1,
+      "side": "outside",
+      "points": [[0, 0], [2, 1], [4, 0]]
+    }]
+  };
+
+  var expected = {
+    "errors": [],
+    "warnings": [],
+    "gcode": [
+      "G90",
+      "G20",
+      "",
+      "; begin cut: profile",
+      "G90",
+      "G1 Z0.25 F20",
+      "G0 X-0.0559 Y0.1118 F10",
+      "G1 Z-0.1 F5",
+      "G1 X1.9441 Y1.1118 F10",
+      "G1 X2 Y1.13975 F10",
+      "G1 X2.0559 Y1.1118 F10",
+      "G1 X4.0559 Y0.1118 F10",
+      "G1 Z0.25 F20",
+      "G4 P0",
+      "; end cut: profile"
+    ]
+  };
+
+  var results = window.opencut.toGCode(job);
+  deepEqual(results, expected);
+});
+
+test("points triangle inside", function() {
+  var job = {
+    "name": "test_job",
+    "units": "inch",
+    "bit_diameter": 0.25,
+    "feed_rate": 10,
+    "plunge_rate": 5,
+    "safety_height": 0,
+    "z_step_size": 0.1,
+    "cuts": [{
+      "type": "profile",
+      "depth": -0.1,
+      "side": "inside",
+      "points": [[4, 0], [2, 1], [0, 0]]
+    }]
+  };
+
+  var expected = {
+    "errors": [],
+    "warnings": [],
+    "gcode": [
+      "G90",
+      "G20",
+      "",
+      "; begin cut: profile",
+      "G90",
+      "G1 Z0.25 F20",
+      "G0 X4.0559 Y0.1118 F10",
+      "G1 Z-0.1 F5",
+      "G1 X2.0559 Y1.1118 F10",
+      "G1 X2 Y1.13975 F10",
+      "G1 X1.9441 Y1.1118 F10",
+      "G1 X-0.0559 Y0.1118 F10",
+      "G1 Z0.25 F20",
+      "G4 P0",
+      "; end cut: profile"
+    ]
+  };
+
+  var results = window.opencut.toGCode(job);
+  deepEqual(results, expected);
+});
+
+test("points 3 point line outside", function() {
+  var job = {
+    "name": "test_job",
+    "units": "inch",
+    "bit_diameter": 0.25,
+    "feed_rate": 10,
+    "plunge_rate": 5,
+    "safety_height": 0,
+    "z_step_size": 0.1,
+    "cuts": [{
+      "type": "profile",
+      "depth": -0.1,
+      "side": "outside",
+      "points": [[0, 0], [2, 0], [4, 0]]
+    }]
+  };
+
+  var expected = {
+    "errors": [],
+    "warnings": [],
+    "gcode": [
+      "G90",
+      "G20",
+      "",
+      "; begin cut: profile",
+      "G90",
+      "G1 Z0.25 F20",
+      "G0 X0 Y0.125 F10",
+      "G1 Z-0.1 F5",
+      "G1 X2 Y0.125 F10",
+      "G1 X4 Y0.125 F10",
+      "G1 Z0.25 F20",
+      "G4 P0",
+      "; end cut: profile"
+    ]
+  };
+
+  var results = window.opencut.toGCode(job);
+  deepEqual(results, expected);
+});
+
+test("points 3 point line inside", function() {
+  var job = {
+    "name": "test_job",
+    "units": "inch",
+    "bit_diameter": 0.25,
+    "feed_rate": 10,
+    "plunge_rate": 5,
+    "safety_height": 0,
+    "z_step_size": 0.1,
+    "cuts": [{
+      "type": "profile",
+      "depth": -0.1,
+      "side": "inside",
+      "points": [[4, 0], [2, 0], [0, 0]]
+    }]
+  };
+
+  var expected = {
+    "errors": [],
+    "warnings": [],
+    "gcode": [
+      "G90",
+      "G20",
+      "",
+      "; begin cut: profile",
+      "G90",
+      "G1 Z0.25 F20",
+      "G0 X4 Y0.125 F10",
+      "G1 Z-0.1 F5",
+      "G1 X2 Y0.125 F10",
+      "G1 X0 Y0.125 F10",
+      "G1 Z0.25 F20",
+      "G4 P0",
+      "; end cut: profile"
+    ]
+  };
+
+  var results = window.opencut.toGCode(job);
+  deepEqual(results, expected);
+});

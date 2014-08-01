@@ -12,7 +12,6 @@
  * cut into the edge a bit more so the corner of the path is included.
  *
  * TODO: more shapes (rounded rectangles, polygons)
- * TODO: arbitrary paths
  */
 (function() {
   /**
@@ -252,16 +251,17 @@
         var toY = pt[1] + r * Math.sin(a1);
         if ((cut.side == "outside" && cornerAngle < 0) ||
             (cut.side == "inside" && cornerAngle > 0)) {
-          var c = (cut.side == "outside") ? Math.PI + cornerAngle : cornerAngle; 
+          var c = (cut.side == "outside") ? Math.PI + cornerAngle : cornerAngle;
           var dist = r / Math.sin(c / 2);
           toX = pt[0] - dist * Math.cos(a1 + cornerAngle / 2);
           toY = pt[1] + dist * Math.sin(a1 + cornerAngle / 2);
         }
         gcode.push("G1 X" + toX + " Y" + toY + " F" + workspace.feed_rate);
 
-        // When we are on the outside of a curve, we need to arc around the corner to keep it sharp.
+        // When we are on the outside of an acute angle, we need to arc around the
+        // corner to keep it sharp without going out of our way.
         if (!(pt[0] == next[0] && pt[1] == next[1])) {
-          if (cut.side == "outside" && cornerAngle > 0) {
+          if (cut.side == "outside" && cornerAngle >= Math.PI / 2) {
             // TODO: arc interpolations over 120˚ are not recommended. split this arc.
             gcode.push("G2" +
                 " X" + (pt[0] - r * Math.cos(a2)) +
@@ -269,13 +269,36 @@
                 " I" + (r * Math.cos(a1)) +
                 " J" + (-r * Math.sin(a1)) +
                 " F" + workspace.feed_rate);
-          } else if (cut.side == "inside" && cornerAngle < 0) {
+          } else if (cut.side == "inside" && cornerAngle <= -Math.PI / 2) {
             // TODO: arc interpolations over 120˚ are not recommended. split this arc.
             gcode.push("G3" +
                 " X" + (pt[0] - r * Math.cos(a2)) +
                 " Y" + (pt[1] + r * Math.sin(a2)) +
                 " I" + (r * Math.cos(a1)) +
                 " J" + (-r * Math.sin(a1)) +
+                " F" + workspace.feed_rate)
+
+          // We are on the outide of an obtuse angle, we can just cut straight
+          // to the intersection point.
+          } else if (cut.side == "outside" && cornerAngle > 0) {
+            var c = (cornerAngle) / 2;
+            var dist = r / Math.cos(c);
+            toX = pt[0] - dist * Math.cos(a1 + c);
+            toY = pt[1] + dist * Math.sin(a1 + c);
+            gcode.push("G1 X" + toX + " Y" + toY + " F" + workspace.feed_rate);
+            gcode.push("G1" +
+                " X" + (pt[0] - r * Math.cos(a2)) +
+                " Y" + (pt[1] + r * Math.sin(a2)) +
+                " F" + workspace.feed_rate);
+          } else if (cut.side == "inside" && cornerAngle < 0) {
+            var c = (-1 * cornerAngle) / 2;
+            var dist = r / Math.cos(c);
+            toX = pt[0] - dist * Math.cos(a1 - c);
+            toY = pt[1] + dist * Math.sin(a1 - c);
+            gcode.push("G1 X" + toX + " Y" + toY + " F" + workspace.feed_rate);
+            gcode.push("G1" +
+                " X" + (pt[0] - r * Math.cos(a2)) +
+                " Y" + (pt[1] + r * Math.sin(a2)) +
                 " F" + workspace.feed_rate);
           } else {
             // Cut to the corner if compensation is enabled.
