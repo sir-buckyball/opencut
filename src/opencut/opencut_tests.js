@@ -40,3 +40,38 @@ test("precision dulling", function() {
   var results = window.opencut.toGCode(job);
   deepEqual(results, expected);
 });
+
+test("the dreaded negative zero", function() {
+  window.opencut.registerCutType("negzero",
+    function generatePathCut(workspace, cut) {
+      return {
+        "warnings": [],
+        "gcode": ["G1 X-0 Y-0"]};
+    });
+
+  var job = {
+    "name": "test_job",
+    "units": "inch",
+    "bit_diameter": 0.25,
+    "feed_rate": 10,
+    "plunge_rate": 5,
+    "z_step_size": 0.1,
+    "cuts": [{"type": "negzero"}]
+  };
+
+  var expected = {
+    "warnings": [],
+    "errors": [],
+    "gcode": [
+      "G90",
+      "G20",
+      "",
+      "; begin cut: negzero",
+      "G1 X0 Y0",
+      "; end cut: negzero"
+    ]
+  };
+
+  var results = window.opencut.toGCode(job);
+  deepEqual(results, expected);
+});

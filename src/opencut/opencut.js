@@ -163,7 +163,13 @@ window.opencut = function() {
           if (parts[m].length < 2) {
             continue;
           }
-          parts[m] = parts[m][0] + parseFloat(parts[m].substr(1)).toFixed(MAX_DECIMAL_PLACES);
+
+          var numeral = parseFloat(parts[m].substr(1)).toFixed(MAX_DECIMAL_PLACES);
+          if (numeral == 0) {
+            // negate any negative zeros.
+            numeral = Math.abs(numeral);
+          }
+          parts[m] = parts[m][0] + numeral;
 
           // Remove unnecessary over-specification.
           if (parts[m].indexOf(".") != -1) {
@@ -174,7 +180,7 @@ window.opencut = function() {
             if (parts[m][lst] == ".") {
               lst--;
             }
-            parts[m] = parts[m].substring(0, lst + 1);            
+            parts[m] = parts[m].substring(0, lst + 1);
           }
         }
         commands[l] = parts.join(" ");
