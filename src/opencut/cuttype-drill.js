@@ -36,15 +36,15 @@ window.opencut.registerCutType("drill", function generatePathCut(workspace, cut)
 
     // Perform peck drilling.
     var z = Math.max(0, cut.depth);
-    var numZPasses = Math.ceil(-cut.depth / workspace.z_step_size);
+    var numZPasses = Math.ceil(-cut.depth / cut.z_step_size);
     for (var k = 0; k < numZPasses; k++) {
       if (k > 0) {
         gcode.push("G1 Z" + z + " F" + workspace.z_rapid_rate);
       }
       if (z > 0) {
-        z = Math.max(cut.depth, -workspace.z_step_size);
+        z = Math.max(cut.depth, -cut.z_step_size);
       } else {
-        z = Math.max(cut.depth, z - workspace.z_step_size);
+        z = Math.max(cut.depth, z - cut.z_step_size);
       }
       gcode.push("G1 Z" + z + " F" + workspace.plunge_rate);
       gcode.push("G1 Z0 F" + workspace.z_rapid_rate);

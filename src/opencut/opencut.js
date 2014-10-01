@@ -123,6 +123,17 @@ window.opencut = function() {
         cut.depth = workspace.default_depth;
       }
 
+      // Let cuts override the workspace z_step_size.
+      if (cut.z_step_size !== undefined) {
+        if (typeof cut.z_step_size != "number") {
+          errors.push("invalid cut z_step_size: " + cut.z_step_size);
+          delete cut.z_step_size;
+  	    }
+      }
+	    if (cut.z_step_size === undefined) {
+        cut.z_step_size = job.z_step_size;
+      }
+
       var cutType = cut.type;
       if (_cutTypes[cutType]) {
         try {
@@ -163,7 +174,13 @@ window.opencut = function() {
           if (parts[m].length < 2) {
             continue;
           }
-          parts[m] = parts[m][0] + parseFloat(parts[m].substr(1)).toFixed(MAX_DECIMAL_PLACES);
+
+          var numeral = parseFloat(parts[m].substr(1)).toFixed(MAX_DECIMAL_PLACES);
+          if (numeral == 0) {
+            // negate any negative zeros.
+            numeral = Math.abs(numeral);
+          }
+          parts[m] = parts[m][0] + numeral;
 
           // Remove unnecessary over-specification.
           if (parts[m].indexOf(".") != -1) {
@@ -174,7 +191,7 @@ window.opencut = function() {
             if (parts[m][lst] == ".") {
               lst--;
             }
-            parts[m] = parts[m].substring(0, lst + 1);            
+            parts[m] = parts[m].substring(0, lst + 1);
           }
         }
         commands[l] = parts.join(" ");

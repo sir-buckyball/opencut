@@ -109,15 +109,15 @@
     gcode.push("G1 Z" + z + " F" + workspace.z_rapid_rate);
     gcode.push("G0 X" + x + " Y" + (y + r) + " F" + workspace.feed_rate);
 
-    var numZPasses = Math.ceil(-cut.depth / workspace.z_step_size);
+    var numZPasses = Math.ceil(-cut.depth / cut.z_step_size);
     for (var k = 0; k < numZPasses; k++) {
       // Decide how far down to drop.
       if (z <= cut.depth) {
         break;
       } else if (z > 0) {
-        z = Math.max(cut.depth, -workspace.z_step_size);
+        z = Math.max(cut.depth, -cut.z_step_size);
       } else {
-        z = Math.max(cut.depth, z - workspace.z_step_size);
+        z = Math.max(cut.depth, z - cut.z_step_size);
       }
 
       // Drop down, go around.
@@ -177,15 +177,15 @@
     gcode.push("G90");
     gcode.push("G1 Z" + workspace.safety_height + " F" + workspace.z_rapid_rate);
 
-    var numZPasses = Math.ceil(-cut.depth / workspace.z_step_size);
+    var numZPasses = Math.ceil(-cut.depth / cut.z_step_size);
     for (var k = 0; k < numZPasses; k++) {
       // Decide how far down to drop.
       if (z <= cut.depth) {
         break;
       } else if (z > 0) {
-        z = Math.max(cut.depth, -workspace.z_step_size);
+        z = Math.max(cut.depth, -cut.z_step_size);
       } else {
-        z = Math.max(cut.depth, z - workspace.z_step_size);
+        z = Math.max(cut.depth, z - cut.z_step_size);
       }
       var didDropDown = false;
 

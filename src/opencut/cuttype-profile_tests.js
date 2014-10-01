@@ -321,7 +321,7 @@ test("points loop outside", function() {
       "G1 X1 Y1.125 F10",
       "G2 X1.125 Y1 I0 J-0.125 F10",
       "G1 X1.125 Y0 F10",
-      "G2 X1 Y-0.125 I-0.125 J-0 F10",
+      "G2 X1 Y-0.125 I-0.125 J0 F10",
       "G1 X0 Y-0.125 F10",
       "G2 X-0.125 Y0 I0 J0.125 F10",
       "G4 P0",
@@ -331,7 +331,7 @@ test("points loop outside", function() {
       "G1 X1 Y1.125 F10",
       "G2 X1.125 Y1 I0 J-0.125 F10",
       "G1 X1.125 Y0 F10",
-      "G2 X1 Y-0.125 I-0.125 J-0 F10",
+      "G2 X1 Y-0.125 I-0.125 J0 F10",
       "G1 X0 Y-0.125 F10",
       "G2 X-0.125 Y0 I0 J0.125 F10",
       "G1 Z0.25 F20",
@@ -753,6 +753,152 @@ test("points 3 point line inside", function() {
       "G1 Z-0.1 F5",
       "G1 X2 Y0.125 F10",
       "G1 X0 Y0.125 F10",
+      "G1 Z0.25 F20",
+      "G4 P0",
+      "; end cut: profile"
+    ]
+  };
+
+  var results = window.opencut.toGCode(job);
+  deepEqual(results, expected);
+});
+
+test("points z-step override", function() {
+  var job = {
+    "name": "test_job",
+    "units": "inch",
+    "bit_diameter": 0.25,
+    "feed_rate": 10,
+    "plunge_rate": 5,
+    "safety_height": 0,
+    "z_step_size": 0.1,
+    "cuts": [{
+      "type": "profile",
+      "depth": -0.2,
+      "side": "inside",
+      "points": [[0, 0], [1, 1]]
+    }, {
+      "type": "profile",
+      "depth": -0.2,
+      "side": "inside",
+      "points": [[2, 2], [3, 3]],
+      "z_step_size": 0.15
+    }]
+  };
+
+  var expected = {
+    "errors": [],
+    "warnings": [],
+    "gcode": [
+      "G90",
+      "G20",
+      "",
+      "; begin cut: profile",
+      "G90",
+      "G1 Z0.25 F20",
+      "G0 X0.08839 Y-0.08839 F10",
+      "G1 Z-0.1 F5",
+      "G1 X1.08839 Y0.91161 F10",
+      "G1 Z0.25 F20",
+      "G4 P0",
+      "G0 X0.08839 Y-0.08839 F10",
+      "G1 Z-0.2 F5",
+      "G1 X1.08839 Y0.91161 F10",
+      "G1 Z0.25 F20",
+      "G4 P0",
+      "; end cut: profile",
+      "",
+      "; begin cut: profile",
+      "G90",
+      "G1 Z0.25 F20",
+      "G0 X2.08839 Y1.91161 F10",
+      "G1 Z-0.15 F5",
+      "G1 X3.08839 Y2.91161 F10",
+      "G1 Z0.25 F20",
+      "G4 P0",
+      "G0 X2.08839 Y1.91161 F10",
+      "G1 Z-0.2 F5",
+      "G1 X3.08839 Y2.91161 F10",
+      "G1 Z0.25 F20",
+      "G4 P0",
+      "; end cut: profile"
+    ]
+  };
+
+  var results = window.opencut.toGCode(job);
+  deepEqual(results, expected);
+});
+
+test("circle z-step override", function() {
+  var job = {
+    "name": "test_job",
+    "units": "inch",
+    "bit_diameter": 0.25,
+    "feed_rate": 10,
+    "plunge_rate": 5,
+    "safety_height": 0,
+    "z_step_size": 0.1,
+    "cuts": [{
+    "type": "profile",
+      "depth": -0.2,
+      "side": "outside",
+      "shape": {
+        "type": "circle",
+        "center": [0, 0],
+        "radius": 0.25
+      }
+    }, {
+    "type": "profile",
+      "depth": -0.2,
+      "side": "outside",
+      "shape": {
+        "type": "circle",
+        "center": [1, 1],
+        "radius": 0.25
+      },
+      "z_step_size": 0.15
+    }]
+  };
+
+  var expected = {
+    "errors": [],
+    "warnings": [],
+    "gcode": [
+      "G90",
+      "G20",
+      "",
+      "; begin cut: profile",
+      "G90",
+      "G1 Z0.25 F20",
+      "G0 X0 Y0.375 F10",
+      "G1 Z-0.1 F5",
+      "G2 X0.375 Y0 I0 J-0.375 F10",
+      "G2 X0 Y-0.375 I-0.375 J0 F10",
+      "G2 X-0.375 Y0 I0 J0.375 F10",
+      "G2 X0 Y0.375 I0.375 J0 F10",
+      "G1 Z-0.2 F5",
+      "G2 X0.375 Y0 I0 J-0.375 F10",
+      "G2 X0 Y-0.375 I-0.375 J0 F10",
+      "G2 X-0.375 Y0 I0 J0.375 F10",
+      "G2 X0 Y0.375 I0.375 J0 F10",
+      "G1 Z0.25 F20",
+      "G4 P0",
+      "; end cut: profile",
+      "",
+      "; begin cut: profile",
+      "G90",
+      "G1 Z0.25 F20",
+      "G0 X1 Y1.375 F10",
+      "G1 Z-0.15 F5",
+      "G2 X1.375 Y1 I0 J-0.375 F10",
+      "G2 X1 Y0.625 I-0.375 J0 F10",
+      "G2 X0.625 Y1 I0 J0.375 F10",
+      "G2 X1 Y1.375 I0.375 J0 F10",
+      "G1 Z-0.2 F5",
+      "G2 X1.375 Y1 I0 J-0.375 F10",
+      "G2 X1 Y0.625 I-0.375 J0 F10",
+      "G2 X0.625 Y1 I0 J0.375 F10",
+      "G2 X1 Y1.375 I0.375 J0 F10",
       "G1 Z0.25 F20",
       "G4 P0",
       "; end cut: profile"
