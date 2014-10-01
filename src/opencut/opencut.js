@@ -123,6 +123,17 @@ window.opencut = function() {
         cut.depth = workspace.default_depth;
       }
 
+      // Let cuts override the workspace z_step_size.
+      if (cut.z_step_size !== undefined) {
+        if (typeof cut.z_step_size != "number") {
+          errors.push("invalid cut z_step_size: " + cut.z_step_size);
+          delete cut.z_step_size;
+  	    }
+      }
+	    if (cut.z_step_size === undefined) {
+        cut.z_step_size = job.z_step_size;
+      }
+
       var cutType = cut.type;
       if (_cutTypes[cutType]) {
         try {
