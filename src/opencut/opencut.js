@@ -134,6 +134,17 @@ window.opencut = function() {
         cut.z_step_size = job.z_step_size;
       }
 
+      // z_top lets cuts save time by skipping initial layers.
+      if (cut.z_top !== undefined) {
+        if (typeof cut.z_top != "number") {
+          errors.push("invalid cut z_top: " + cut.z_top);
+          delete cut.z_top;
+  	    }
+      }
+	    if (cut.z_top === undefined) {
+        cut.z_top = 0;
+      }
+
       var cutType = cut.type;
       if (_cutTypes[cutType]) {
         try {
