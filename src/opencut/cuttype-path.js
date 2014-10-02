@@ -37,7 +37,7 @@ window.opencut.registerCutType("path", function generatePathCut(workspace, cut) 
   gcode.push("G1 Z" + z + " F" + workspace.z_rapid_rate);
 
   // Cut the paths.
-  var numZPasses = Math.ceil(-cut.depth / cut.z_step_size);
+  var numZPasses = Math.ceil(Math.abs(cut.z_top - cut.depth) / cut.z_step_size);
   for (var k = 0; k < numZPasses; k++) {
     // Rapid move over to the starting point.
     if (k == 0 || !joinEnds) {
@@ -45,8 +45,8 @@ window.opencut.registerCutType("path", function generatePathCut(workspace, cut) 
     }
 
     // Decide how far down to drop and plunge.
-    if (z > 0) {
-      z = Math.max(cut.depth, -cut.z_step_size);
+    if (z > cut.z_top) {
+      z = Math.max(cut.depth, cut.z_top - cut.z_step_size);
     } else {
       z = Math.max(cut.depth, z - cut.z_step_size);
     }
