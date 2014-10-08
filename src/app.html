@@ -1,0 +1,90 @@
+<!doctype html>
+<html ng-app="opencutApp" ng-app ng-csp>
+  <head>
+    <title>opencut: declarative CAM</title>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width">
+    <link rel="stylesheet" href="deps/angular-csp.css">
+    <link rel="stylesheet" href="deps/codemirror-4.6/codemirror.css">
+    <link rel="stylesheet" href="docs.css">
+    <style>
+
+main {
+  display: flex;
+}
+
+.error {
+  background: red;
+  font-weight: bold;
+}
+
+.warning {
+  background: yellow;
+}
+
+#gcode {
+  border-left: solid 1px black;
+  padding: 0 0.25em;
+}
+#gcode .code {
+  font-family: monospace;
+}
+#gcode .odd {
+  background: #f8fcff;
+}
+
+#preview-area {
+  border: solid 1px #ccc;
+  width: 250px;
+  height: 500px;
+}
+
+#yaml-editor {
+  flex: 1;
+}
+
+    </style>
+    <script type="text/javascript" src="deps/angular.min.js"></script>
+    <script type="text/javascript" src="deps/codemirror-4.6/codemirror.js"></script>
+    <script type="text/javascript" src="deps/codemirror-4.6/mode/yaml/yaml.js"></script>
+    <script type="text/javascript" src="deps/ui-codemirror.js"></script>
+    <script type="text/javascript" src="deps/yaml.min.js"></script>
+    <script type="text/javascript" src="deps/paper-core.min.js"></script>
+    <script type="text/javascript" src="opencut/opencut.js"></script>
+    <script type="text/javascript" src="opencut/cuttype-drill.js"></script>
+    <script type="text/javascript" src="opencut/cuttype-gcode.js"></script>
+    <script type="text/javascript" src="opencut/cuttype-path.js"></script>
+    <script type="text/javascript" src="opencut/cuttype-pocket.js"></script>
+    <script type="text/javascript" src="opencut/cuttype-profile.js"></script>
+    <script type="text/javascript" src="opencut-paper.js"></script>
+    <script type="text/javascript" src="app.js"></script>
+  </head>
+  <body ng-controller="Ctrl">
+    <nav id="topnav">
+      <button ng-click="openFile()">open</button>
+      <button ng-click="saveFile()">save</button>
+      <button ng-click="saveNewFile()">save as</button>
+      <button ng-click="exportGcode()">export gcode</button>
+      |
+      <button disabled>add cut</button>
+      |
+      <input type="checkbox" ng-model="showEditor">editor</input>
+      <input type="checkbox" ng-model="showPreview">preview</input>
+      <input type="checkbox" ng-model="showGcode">gcode</input>
+    </nav>
+
+    <div class="error" ng-repeat="e in yamlErrors track by $index">{{e}}</div>
+    <div class="error" ng-repeat="e in compiledJob.errors track by $index">{{e}}</div>
+    <div class="warning" ng-repeat="w in compiledJob.warnings track by $index">{{w}}</div>
+
+    <main>
+      <ui-codemirror id="yaml-editor" ng-model="jobYaml" ui-codemirror-opts="yamlEditorOptions" ng-show="showEditor"></ui-codemirror>
+
+      <canvas id="preview-area" ng-show="showPreview"></canvas>
+
+      <div id="gcode" ng-if="showGcode">
+        <div ng-repeat="line in compiledJob.gcode track by $index" ng-class="{'odd': $even, 'code': 1}">&#8203;{{line}}</div>
+      </div>
+    </main>
+  </body>
+</html>

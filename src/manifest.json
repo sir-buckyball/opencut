@@ -1,0 +1,20 @@
+{
+  "name": "opencut",
+  "version": "2014.10.4.0",
+  "manifest_version": 2,
+  "description": "A declarative CAM program for generating gcode.",
+  "icons": {
+    "128": "icon_128.png"
+  },
+  "app": {
+    "background": {
+      "scripts": [
+        "app-background.js"
+      ]
+    }
+  },
+  "minimum_chrome_version": "31",
+  "permissions": [
+    {"fileSystem": ["write", "retainEntries", "directory"]}
+  ]
+}
