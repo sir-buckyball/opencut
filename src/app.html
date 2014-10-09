@@ -11,6 +11,7 @@
 
 main {
   display: flex;
+  flex-grow: 1;
 }
 
 .error {
@@ -23,8 +24,9 @@ main {
 }
 
 #gcode {
-  border-left: solid 1px black;
+  border-left: solid 1px #ddd;
   padding: 0 0.25em;
+  overflow-y: scroll;
 }
 #gcode .code {
   font-family: monospace;
@@ -33,14 +35,23 @@ main {
   background: #f8fcff;
 }
 
-#preview-area {
-  border: solid 1px #ccc;
+#preview-container {
+  border-left: solid 1px #ddd;
   width: 250px;
-  height: 500px;
 }
 
 #yaml-editor {
   flex: 1;
+  overflow-y: scroll;
+}
+
+#bottom-tracker {
+  position: absolute;
+  bottom: 0;
+  height: 0;
+  width: 0;
+  padding: 0;
+  margin: 0;
 }
 
     </style>
@@ -80,11 +91,15 @@ main {
     <main>
       <ui-codemirror id="yaml-editor" ng-model="jobYaml" ui-codemirror-opts="yamlEditorOptions" ng-show="showEditor"></ui-codemirror>
 
-      <canvas id="preview-area" ng-show="showPreview"></canvas>
+      <div id="preview-container">
+        <canvas id="preview-area" ng-show="showPreview"></canvas>
+      </div>
 
       <div id="gcode" ng-if="showGcode">
         <div ng-repeat="line in compiledJob.gcode track by $index" ng-class="{'odd': $even, 'code': 1}">&#8203;{{line}}</div>
       </div>
     </main>
+
+    <footer id="bottom-tracker"></footer>
   </body>
 </html>

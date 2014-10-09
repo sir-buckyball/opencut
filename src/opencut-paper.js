@@ -81,4 +81,10 @@ var opencutPaper = function(canvasId) {
     paper.view.draw();
   }
   this.renderJob = renderJob;
+
+  function setSize(bounds) {
+    paper.view.viewSize = [bounds.width, bounds.height];
+    resizeView();
+  }
+  this.setSize = setSize;
 };

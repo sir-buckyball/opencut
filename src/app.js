@@ -1,5 +1,5 @@
 var app = angular.module('opencutApp', ['ui.codemirror']);
-app.controller('Ctrl', function ($scope) {
+app.controller('Ctrl', function ($scope, $window) {
   var renderer = new opencutPaper('preview-area');
 
   $scope.showEditor = true;
@@ -31,7 +31,7 @@ app.controller('Ctrl', function ($scope) {
     if (!$scope.compiledJob || !angular.equals(newValue, oldValue)) {
       renderer.renderJob(newValue);
       if (newValue) {
-        $scope.compiledJob = window.opencut.toGCode(newValue);
+        $scope.compiledJob = $window.opencut.toGCode(newValue);
         $scope.gcode = $scope.compiledJob.gcode;
       } else {
         $scope.compiledJob = {};
@@ -152,4 +152,30 @@ app.controller('Ctrl', function ($scope) {
       });
     }));
   };
+
+  // Helper function for resizing elements.
+  var stretchToAchor = function(elem, anchor) {
+    if (elem && anchor) {
+      elem.style.setProperty("height", (anchor.getBoundingClientRect().top -
+          elem.getBoundingClientRect().top) + "px");
+    }
+  }
+
+  // Update the size of various elements to fill the screen.
+  var resize = function() {
+    var anchor = document.getElementById("bottom-tracker");
+    var previewContainer = document.getElementById("preview-container");
+    stretchToAchor(document.getElementById("gcode"), anchor);
+    stretchToAchor(previewContainer, anchor);
+
+    renderer.setSize(previewContainer.getBoundingClientRect());
+
+    $scope.$broadcast('CodeMirror', function(cm) {
+      var e = document.getElementById("yaml-editor");
+      cm.setSize("auto", (anchor.getBoundingClientRect().top -
+          e.getBoundingClientRect().top) + "px");
+    });
+  };
+  $window.addEventListener('resize', resize);
+  $window.addEventListener('load', resize);
 });
