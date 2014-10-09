@@ -29,8 +29,17 @@ var opencutPaper = function(canvasId) {
       return;
     }
 
+    var allPaths = new paper.Group();
+
+    // Render an origin marker.
+    allPaths.addChild(new paper.Path.Line({
+      "from": [-1, 0], "to": [1, 0], "strokeColor": "#CCDDFF", "strokeWidth": 1
+    }));
+    allPaths.addChild(new paper.Path.Line({
+      "from": [0, -1], "to": [0, 1], "strokeColor": "#CCDDFF", "strokeWidth": 1
+    }));
+
     // Render the shapes which the cuts will be centered around.
-    var cutShapes = new paper.Group();
     for (var i = 0; i < job.cuts.length; i++) {
       var cut = job.cuts[i];
       if (cut.points && cut.points.length > 0) {
@@ -40,7 +49,7 @@ var opencutPaper = function(canvasId) {
               new paper.Point(cut.points[k]), job.bit_diameter / 2);
             drillSpot.strokeColor = "black";
             drillSpot.fillColor = "grey";
-            cutShapes.addChild(drillSpot);
+            allPaths.addChild(drillSpot);
           }
         } else {
           var path = new paper.Path();
@@ -48,35 +57,35 @@ var opencutPaper = function(canvasId) {
           for (var j = 1; j < cut.points.length; j++) {
             path.lineTo(new paper.Point(cut.points[j]));
           }
-          cutShapes.addChild(path);
+          allPaths.addChild(path);
         }
       }
 
       if (cut.shape) {
         if (cut.shape.type == "circle") {
-          cutShapes.addChild(new paper.Shape.Circle(
+          allPaths.addChild(new paper.Shape.Circle(
             new paper.Point(cut.shape.center), cut.shape.radius));
         } else if (cut.shape.type == "rectangle") {
-          cutShapes.addChild(new paper.Shape.Rectangle(
+          allPaths.addChild(new paper.Shape.Rectangle(
             new paper.Point(cut.shape.origin), new paper.Size(cut.shape.size)));
         } else {
           console.log("unknown shape: " + cut.shape.type);
         }
       }
 
-      if (cutShapes.lastChild) {
-        cutShapes.lastChild.strokeColor = (cut.color !== undefined) ? cut.color : "black";
+      if (allPaths.lastChild) {
+        allPaths.lastChild.strokeColor = (cut.color !== undefined) ? cut.color : "black";
       }
     }
 
     // Invert everything (to move the origin to the bottom left).
-    cutShapes.scale(1, -1);
+    allPaths.scale(1, -1);
 
     resizeView();
 
     // The view must be resized before setting the stroke width
     // so we know how wide to stroke.
-    cutShapes.style.strokeWidth = 1 / paper.view.getZoom();
+    allPaths.style.strokeWidth = 1 / paper.view.getZoom();
 
     paper.view.draw();
   }
