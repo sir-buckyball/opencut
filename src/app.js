@@ -1,5 +1,5 @@
-var app = angular.module('opencutApp', ['ui.codemirror']);
-app.controller('Ctrl', function ($scope, $window) {
+var app = angular.module('opencutApp', ['ui.codemirror', 'cfp.hotkeys']);
+app.controller('Ctrl', function ($scope, $window, hotkeys) {
   var renderer = new opencutPaper('preview-area');
 
   $scope.showEditor = true;
@@ -178,4 +178,27 @@ app.controller('Ctrl', function ($scope, $window) {
   };
   $window.addEventListener('resize', resize);
   $window.addEventListener('load', resize);
+
+
+  // Setup hotkeys.
+  hotkeys.add({
+    combo: 'mod+o',
+    description: 'open a file',
+    callback: $scope.openFile
+  });
+  hotkeys.add({
+    combo: 'mod+s',
+    description: 'save a file',
+    callback: $scope.saveFile
+  });
+  hotkeys.add({
+    combo: 'mod+shift+s',
+    description: 'save as a new file',
+    callback: $scope.saveNewFile
+  });
+  hotkeys.add({
+    combo: 'mod+e',
+    description: 'export gcode',
+    callback: $scope.exportGcode
+  });
 });
