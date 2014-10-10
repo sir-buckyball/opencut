@@ -92,7 +92,10 @@ main {
     <div class="warning" ng-repeat="w in compiledJob.warnings track by $index">{{w}}</div>
 
     <main>
-      <ui-codemirror id="yaml-editor" ng-model="jobYaml" ui-codemirror-opts="yamlEditorOptions" ng-show="showEditor"></ui-codemirror>
+      <ui-codemirror id="yaml-editor"
+          ng-model="jobYaml"
+          ng-model-options="{debounce: 300}"
+          ui-codemirror-opts="yamlEditorOptions" ng-show="showEditor"></ui-codemirror>
 
       <div id="preview-container">
         <canvas id="preview-area" ng-show="showPreview"></canvas>
