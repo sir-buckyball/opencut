@@ -77,7 +77,7 @@ app.controller('Ctrl', function ($scope, $window, hotkeys) {
       'type': 'openFile',
       'accepts': [{
         'description': 'YAML files',
-        'extensions': ['yml', 'yaml', '.txt']
+        'extensions': ['yml', 'yaml', 'txt']
       }]
     }, function(entry) {
       $scope.$apply(function() {
