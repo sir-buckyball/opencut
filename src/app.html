@@ -119,13 +119,13 @@ main {
       <p>
         <a href="http://sir-buckyball.github.io/opencut/src/docs.html" target="_blank">documentation</a>
       </p>
-      <input type="checkbox" ng-model="showYamlEditor">show yaml editor</input>
+      <label><input type="checkbox" ng-model="showYamlEditor">show yaml editor</label>
       <br>
-      <input type="checkbox" ng-model="showJobEditor">show job editor [experimental]</input>
+      <label><input type="checkbox" ng-model="showJobEditor">show job editor [experimental]</label>
       <br>
-      <input type="checkbox" ng-model="showPreview">show preview</input>
+      <label><input type="checkbox" ng-model="showPreview">show preview</label>
       <br>
-      <input type="checkbox" ng-model="showGcode">show gcode</input>
+      <label><input type="checkbox" ng-model="showGcode">show gcode</label>
     </div>
 
     <div class="error" ng-repeat="e in yamlErrors track by $index">{{e}}</div>
