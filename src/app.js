@@ -192,27 +192,26 @@ app.controller('Ctrl', function ($rootScope, $scope, $window, hotkeys) {
   hotkeys.add({
     combo: 'mod+o',
     description: 'open a file',
-    callback: $scope.openFile
+    callback: $scope.openFile,
+    allowIn: ['INPUT', 'SELECT', 'TEXTAREA']
   });
   hotkeys.add({
     combo: 'mod+s',
     description: 'save a file',
-    callback: $scope.saveFile
+    callback: $scope.saveFile,
+    allowIn: ['INPUT', 'SELECT', 'TEXTAREA']
   });
   hotkeys.add({
     combo: 'shift+mod+s',
     description: 'save as a new file',
-    callback: $scope.saveNewFile
+    callback: $scope.saveNewFile,
+    allowIn: ['INPUT', 'SELECT', 'TEXTAREA']
   });
   hotkeys.add({
     combo: 'mod+e',
     description: 'export gcode',
-    callback: $scope.exportGcode
-  });
-  hotkeys.add({
-    combo: 'mod+e',
-    description: 'export gcode',
-    callback: $scope.exportGcode
+    callback: $scope.exportGcode,
+    allowIn: ['INPUT', 'SELECT', 'TEXTAREA']
   });
   hotkeys.add({
     combo: 'mod+;',
