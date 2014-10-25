@@ -7,6 +7,9 @@ var opencutPaper = function(canvasId) {
     var maxX = 0.01;
     var maxY = 0.01;
     var allItems = paper.project.getItems();
+    if (!allItems || !allItems.length) {
+      return;
+    }
     for (var k = 0; k < allItems.length; k++) {
       var bounds = allItems[k].getBounds();
       minX = Math.min(minX, bounds.x);
