@@ -79,11 +79,13 @@ window.opencut = function() {
       }
     }
     workspace.z_step_size = (workspace.units == "mm") ? 1 : 0.125;
-    if (!job.z_step_size) {
+    if (job.z_step_size == null) {
       warnings.push("z_step_size not specified. using default [" + workspace.z_step_size + "]");
     } else {
       if (typeof job.z_step_size != "number") {
         errors.push("invalid z_step_size: " + job.z_step_size);
+      } else if (job.z_step_size <= 0) {
+        errors.push("z_step_size must be greater than 0");
       } else {
         workspace.z_step_size = job.z_step_size;
       }
@@ -104,6 +106,15 @@ window.opencut = function() {
       } else {
         workspace.default_depth = job.default_depth;
       }
+    }
+
+    // If we have any errors at this point, it is unsafe to continue.
+    if (errors.length > 0) {
+      return {
+        "warnings": warnings,
+        "errors": errors,
+        "gcode": []
+      };
     }
 
     // Configure the job parameters.
@@ -128,7 +139,10 @@ window.opencut = function() {
         if (typeof cut.z_step_size != "number") {
           errors.push("invalid cut z_step_size: " + cut.z_step_size);
           delete cut.z_step_size;
-  	    }
+  	    } else if (cut.z_step_size <= 0) {
+          errors.push("z_step_size must be greater than 0");
+          delete cut.z_step_size;
+        }
       }
 	    if (cut.z_step_size === undefined) {
         cut.z_step_size = job.z_step_size;

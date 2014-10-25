@@ -75,3 +75,27 @@ test("the dreaded negative zero", function() {
   var results = window.opencut.toGCode(job);
   deepEqual(results, expected);
 });
+
+test("critical errors", function() {
+  var job = {
+    "name": "test_job",
+    "units": "inch",
+    "bit_diameter": 0.25,
+    "feed_rate": 10,
+    "plunge_rate": 5,
+    "z_step_size": 0,
+    "cuts": [{
+      "type": "gcode",
+      "gcode": ["M3", "M5"],
+    }]
+  };
+
+  var expected = {
+    "warnings": [],
+    "errors": ["z_step_size must be greater than 0"],
+    "gcode": []
+  };
+
+  var results = window.opencut.toGCode(job);
+  deepEqual(results, expected);
+});
