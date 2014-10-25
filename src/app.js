@@ -1,5 +1,5 @@
 var app = angular.module('opencutApp', ['ui.codemirror', 'cfp.hotkeys']);
-app.controller('Ctrl', function ($rootScope, $scope, $window, hotkeys) {
+app.controller('Ctrl', function ($rootScope, $scope, $window, $timeout, hotkeys) {
   var renderer = new opencutPaper('preview-area');
 
   $scope.showSettings = false;
@@ -199,6 +199,14 @@ app.controller('Ctrl', function ($rootScope, $scope, $window, hotkeys) {
   $window.addEventListener('resize', resize);
   $window.addEventListener('load', resize);
 
+  var delayedResize = function() {
+    $timeout(resize);
+  };
+  $scope.$watch('showSettings', delayedResize);
+  $scope.$watch('showYamlEditor', delayedResize);
+  $scope.$watch('showJobEditor', delayedResize);
+  $scope.$watch('showGcode', delayedResize);
+  $scope.$watch('showPreview', delayedResize);
 
   // Setup hotkeys.
   hotkeys.add({
