@@ -186,15 +186,19 @@ app.controller('Ctrl', function ($rootScope, $scope, $window, $timeout, hotkeys)
     var previewContainer = document.getElementById("preview-container");
     stretchToAchor(document.getElementById("job-editor"), anchor);
     stretchToAchor(document.getElementById("gcode"), anchor);
-    stretchToAchor(previewContainer, anchor);
 
-    renderer.setSize(previewContainer.getBoundingClientRect());
+    if ($scope.showPreview) {
+      stretchToAchor(previewContainer, anchor);
+      renderer.setSize(previewContainer.getBoundingClientRect());
+    }
 
-    $scope.$broadcast('CodeMirror', function(cm) {
-      var e = document.getElementById("yaml-editor");
-      cm.setSize("auto", (anchor.getBoundingClientRect().top -
-          e.getBoundingClientRect().top) + "px");
-    });
+    if ($scope.showJobEditor) {
+      $scope.$broadcast('CodeMirror', function(cm) {
+        var e = document.getElementById("yaml-editor");
+        cm.setSize("auto", (anchor.getBoundingClientRect().top -
+            e.getBoundingClientRect().top) + "px");
+      });
+    }
   };
   $window.addEventListener('resize', resize);
   $window.addEventListener('load', resize);
