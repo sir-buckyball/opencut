@@ -7,8 +7,26 @@
     <link rel="stylesheet" href="deps/angular-csp.css">
     <link rel="stylesheet" href="deps/codemirror-4.6/codemirror.css">
     <link rel="stylesheet" href="deps/hotkeys.min.css">
-    <link rel="stylesheet" href="docs.css">
     <style>
+
+body {
+  color: #44502F;
+  margin: 0;
+  padding: 0;
+  font-family: sans-serif;
+}
+
+h2, h3 {
+  color: #26422B;
+}
+
+nav {
+  background: #A0B57D;
+  border-bottom: 2px solid #556B2F;
+}
+nav a {
+  color: #0D3914;
+}
 
 main {
   display: flex;
@@ -56,6 +74,15 @@ main {
   margin: 0;
 }
 
+#job-editor {
+  border-left: solid 1px #666;
+  overflow-y: scroll;
+}
+
+#settings {
+  border-bottom: solid 1px #ddd;
+}
+
     </style>
     <script type="text/javascript" src="deps/angular.min.js"></script>
     <script type="text/javascript" src="deps/codemirror-4.6/codemirror.js"></script>
@@ -72,6 +99,7 @@ main {
     <script type="text/javascript" src="opencut/cuttype-profile.js"></script>
     <script type="text/javascript" src="opencut-paper.js"></script>
     <script type="text/javascript" src="app.js"></script>
+    <script type="text/javascript" src="job_edit_ctrl.js"></script>
   </head>
   <body ng-controller="Ctrl">
     <nav id="topnav">
@@ -79,13 +107,21 @@ main {
       <button ng-click="saveFile()">save</button>
       <button ng-click="saveNewFile()">save as</button>
       <button ng-click="exportGcode()">export gcode</button>
-      |
-      <button disabled>add cut</button>
-      |
-      <input type="checkbox" ng-model="showEditor">editor</input>
-      <input type="checkbox" ng-model="showPreview">preview</input>
-      <input type="checkbox" ng-model="showGcode">gcode</input>
+      <button ng-click="toggleSettings()">settings</a>
     </nav>
+
+    <div id="settings" ng-show="showSettings">
+      <p>
+        <a href="http://sir-buckyball.github.io/opencut/src/docs.html" target="_blank">documentation</a>
+      </p>
+      <input type="checkbox" ng-model="showYamlEditor">show yaml editor</input>
+      <br>
+      <input type="checkbox" ng-model="showJobEditor">show job editor [experimental]</input>
+      <br>
+      <input type="checkbox" ng-model="showPreview">show preview</input>
+      <br>
+      <input type="checkbox" ng-model="showGcode">show gcode</input>
+    </div>
 
     <div class="error" ng-repeat="e in yamlErrors track by $index">{{e}}</div>
     <div class="error" ng-repeat="e in compiledJob.errors track by $index">{{e}}</div>
@@ -95,10 +131,124 @@ main {
       <ui-codemirror id="yaml-editor"
           ng-model="jobYaml"
           ng-model-options="{debounce: 300}"
-          ui-codemirror-opts="yamlEditorOptions" ng-show="showEditor"></ui-codemirror>
+          ui-codemirror-opts="yamlEditorOptions"
+          ng-show="showYamlEditor"></ui-codemirror>
 
-      <div id="preview-container">
-        <canvas id="preview-area" ng-show="showPreview"></canvas>
+      <div id="job-editor" ng-show="showJobEditor" ng-controller="JobEditCtrl">
+        <form>
+          <div>
+            <label for="jobUnit">units</label>
+            <select name="jobUnit" ng-model="editjob.units">
+              <option value="inch">inches</option>
+              <option value="mm">millimeters</option>
+            </select>
+          </div>
+          <div>
+            <label>
+              bit diameter:
+              <input ng-model="editjob.bit_diameter" type="number" step="0.1">
+            </label>
+          </div>
+          <div>
+            <label>
+              feed rate:
+              <input ng-model="editjob.feed_rate" type="number">
+            </label>
+          </div>
+          <div>
+            <label>
+              plunge rate:
+              <input ng-model="editjob.plunge_rate" type="number">
+            </label>
+          </div>
+          <div>
+            <label>
+              safety height:
+              <input ng-model="editjob.safety_height" type="number" step="0.1">
+            </label>
+          </div>
+          <div>
+            <label>
+              z-step size:
+              <input ng-model="editjob.z_step_size" type="number" step="0.1">
+            </label>
+          </div>
+          <div>
+            <label>
+              default depth:
+              <input ng-model="editjob.default_depth" type="number" step="0.1">
+            </label>
+          </div>
+
+          <div ng-repeat="cut in editjob.cuts track by $index">
+            <h4>cut  [<a ng-click="editjob.cuts.splice($index, 1)">-</a>]</h4>
+            <div>
+              <label>type: <input ng-model="cut.type"></label>
+            </div>
+            <div>
+              <label>depth: <input ng-model="cut.depth"></label>
+            </div>
+            <div>
+              <label>z-top: <input ng-model="cut.z_top"></label>
+            </div>
+            <div>
+              <label>side: <input ng-model="cut.side"></label>
+            </div>
+
+            <div ng-if="cut.shape">
+              <div>
+                <label>type:
+                  <select name="jobUnit" ng-model="cut.shape.type">
+                    <option value="circle">circle</option>
+                    <option value="rectangle">rectangle</option>
+                  </select>
+                </label>
+              </div>
+              <div ng-if="cut.shape.type == 'circle'">
+                <label>
+                  center:
+                  <input ng-model="cut.shape.center[0]" type="number">
+                  <input ng-model="cut.shape.center[1]" type="number">
+                </label>
+              </div>
+              <div ng-if="cut.shape.type == 'circle'">
+                <label>radius: <input ng-model="cut.shape.radius" type="number"></label>
+              </div>
+              <div ng-if="cut.shape.type == 'rectangle'">
+                <label>
+                  origin:
+                  <input ng-model="cut.shape.origin[0]" type="number">
+                  <input ng-model="cut.shape.origin[1]" type="number">
+                </label>
+              </div>
+              <div ng-if="cut.shape.type == 'rectangle'">
+                <label>
+                  size:
+                  <input ng-model="cut.shape.size[0]" type="number">
+                  <input ng-model="cut.shape.size[1]" type="number">
+                </label>
+              </div>
+            </div>
+            <div ng-if="cut.points">
+              <div ng-repeat="pt in cut.points track by $index">
+                <label>
+                  point:
+                  <input ng-model="pt[0]" type="number">
+                  <input ng-model="pt[1]" type="number">
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <button ng-click="update()">update</button>
+          </div>
+        </div>
+        </form>
+      </div>
+
+      <div id="preview-container" ng-show="showPreview">
+        <canvas id="preview-area"></canvas>
       </div>
 
       <div id="gcode" ng-if="showGcode">
@@ -106,6 +256,6 @@ main {
       </div>
     </main>
 
-    <footer id="bottom-tracker"></footer>
+    <div id="bottom-tracker"></div>
   </body>
 </html>

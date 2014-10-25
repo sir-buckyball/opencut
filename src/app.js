@@ -1,10 +1,16 @@
 var app = angular.module('opencutApp', ['ui.codemirror', 'cfp.hotkeys']);
-app.controller('Ctrl', function ($scope, $window, hotkeys) {
+app.controller('Ctrl', function ($rootScope, $scope, $window, hotkeys) {
   var renderer = new opencutPaper('preview-area');
 
-  $scope.showEditor = true;
+  $scope.showSettings = false;
+  $scope.showYamlEditor = true;
+  $scope.showJobEditor = false;
   $scope.showGcode = false;
   $scope.showPreview = true;
+
+  $scope.toggleSettings = function() {
+    $scope.showSettings = !$scope.showSettings;
+  };
 
   $scope.yamlEditorOptions = {
         lineWrapping : true,
@@ -28,10 +34,12 @@ app.controller('Ctrl', function ($scope, $window, hotkeys) {
   });
 
   $scope.$watch('job', function(newValue, oldValue) {
+    $rootScope.$broadcast('job', newValue);
     if (!$scope.compiledJob || !angular.equals(newValue, oldValue)) {
       renderer.renderJob(newValue);
       if (newValue) {
-        $scope.compiledJob = $window.opencut.toGCode(newValue);
+        $scope.compiledJob = $window.opencut.toGCode(
+          JSON.parse(JSON.stringify(newValue)));
         $scope.gcode = $scope.compiledJob.gcode;
       } else {
         $scope.compiledJob = {};
@@ -42,7 +50,6 @@ app.controller('Ctrl', function ($scope, $window, hotkeys) {
 
 
   $scope.jobYaml = YAML.stringify({
-    "name": "test_job",
     "units": "inch",
     "bit_diameter": 0.25,
     "feed_rate": 10,
@@ -61,14 +68,14 @@ app.controller('Ctrl', function ($scope, $window, hotkeys) {
     }]
   }, 4, 2);
 
-  $scope.toPrettyJson = function(obj) {
-    return JSON.stringify(obj, null, '  ');
-  };
-
-  $scope.toYaml = function(obj) {
-    return YAML.stringify(obj, 3, 2);
-  };
-
+  $scope.$on('updatedJob', function(evt, job) {
+    $scope.jobYaml = YAML.stringify(job, 4, 2);
+    $scope.job = job;
+    renderer.renderJob(job);
+    $scope.compiledJob = $window.opencut.toGCode(
+      JSON.parse(JSON.stringify(job)));
+    $scope.gcode = $scope.compiledJob.gcode;
+  });
 
   $scope.yamlFile = null;
 
@@ -165,6 +172,7 @@ app.controller('Ctrl', function ($scope, $window, hotkeys) {
   var resize = function() {
     var anchor = document.getElementById("bottom-tracker");
     var previewContainer = document.getElementById("preview-container");
+    stretchToAchor(document.getElementById("job-editor"), anchor);
     stretchToAchor(document.getElementById("gcode"), anchor);
     stretchToAchor(previewContainer, anchor);
 
@@ -192,7 +200,7 @@ app.controller('Ctrl', function ($scope, $window, hotkeys) {
     callback: $scope.saveFile
   });
   hotkeys.add({
-    combo: 'mod+shift+s',
+    combo: 'shift+mod+s',
     description: 'save as a new file',
     callback: $scope.saveNewFile
   });
@@ -200,5 +208,15 @@ app.controller('Ctrl', function ($scope, $window, hotkeys) {
     combo: 'mod+e',
     description: 'export gcode',
     callback: $scope.exportGcode
+  });
+  hotkeys.add({
+    combo: 'mod+e',
+    description: 'export gcode',
+    callback: $scope.exportGcode
+  });
+  hotkeys.add({
+    combo: 'mod+;',
+    description: 'settings',
+    callback: $scope.toggleSettings
   });
 });
