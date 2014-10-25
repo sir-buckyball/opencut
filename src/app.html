@@ -83,6 +83,10 @@ main {
   border-bottom: solid 1px #ddd;
 }
 
+#dirtybit {
+  float: right;
+}
+
     </style>
     <script type="text/javascript" src="deps/angular.min.js"></script>
     <script type="text/javascript" src="deps/codemirror-4.6/codemirror.js"></script>
@@ -107,7 +111,8 @@ main {
       <button ng-click="saveFile()">save</button>
       <button ng-click="saveNewFile()">save as</button>
       <button ng-click="exportGcode()">export gcode</button>
-      <button ng-click="toggleSettings()">settings</a>
+      <button ng-click="toggleSettings()">settings</button>
+      <span id="dirtybit" ng-if="isYamlDirty">*</span>
     </nav>
 
     <div id="settings" ng-show="showSettings">

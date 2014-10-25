@@ -7,6 +7,7 @@ app.controller('Ctrl', function ($rootScope, $scope, $window, hotkeys) {
   $scope.showJobEditor = false;
   $scope.showGcode = false;
   $scope.showPreview = true;
+  $scope.isYamlDirty = false;
 
   $scope.toggleSettings = function() {
     $scope.showSettings = !$scope.showSettings;
@@ -25,6 +26,7 @@ app.controller('Ctrl', function ($rootScope, $scope, $window, hotkeys) {
   $scope.$watch('jobYaml', function(newValue, oldValue) {
     if (!$scope.job || !angular.equals(newValue, oldValue)) {
       $scope.yamlErrors = [];
+      $scope.isYamlDirty = ($scope.fileContents != newValue);
       try {
         $scope.job = YAML.parse(newValue);
       } catch (err) {
@@ -99,6 +101,8 @@ app.controller('Ctrl', function ($rootScope, $scope, $window, hotkeys) {
           console.log("I did done load");
           $scope.$apply(function() {
             $scope.jobYaml = e.target.result;
+            $scope.fileContents = e.target.result
+            $scope.isYamlDirty = false;
           });
         };
         reader.readAsText(file);
@@ -129,6 +133,8 @@ app.controller('Ctrl', function ($rootScope, $scope, $window, hotkeys) {
     }, writeToFileFn($scope.jobYaml, function(entry) {
       $scope.$apply(function() {
         $scope.yamlFile = entry;
+        $scope.fileContents = $scope.jobYaml;
+        $scope.isYamlDirty = false;
       });
     }));
   };
@@ -139,7 +145,13 @@ app.controller('Ctrl', function ($rootScope, $scope, $window, hotkeys) {
       return;
     } else {
       chrome.fileSystem.getWritableEntry($scope.yamlFile,
-          writeToFileFn($scope.jobYaml));
+          writeToFileFn($scope.jobYaml, function(entry) {
+            $scope.$apply(function() {
+              $scope.fileContents = $scope.jobYaml;
+              $scope.isYamlDirty = false;
+            });
+          })
+      );
     }
   };
 
