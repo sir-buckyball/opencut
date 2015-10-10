@@ -35,6 +35,82 @@ window.opencut = function() {
   };
 
   /**
+   * Generate g-code for a single cut. This function exists for cut-type
+   * composition.
+   *
+   * @param {object} workspace parameters for the cut
+   * @param {object} cut to makes
+   * @return An object containing the gcode, and any warnings generated
+   */
+  var gcodeForCut = function(workspace, cut) {
+    var warnings = [];
+    var errors = [];
+    var commands = [];
+
+    // Use the workspace default depth if a cut depth was not specified.
+    if (cut.depth === undefined && workspace.default_depth !== undefined) {
+      cut.depth = workspace.default_depth;
+    }
+
+    // Let cuts override the workspace z_step_size.
+    if (cut.z_step_size !== undefined) {
+      if (typeof cut.z_step_size != "number") {
+        errors.push("invalid cut z_step_size: " + cut.z_step_size);
+        delete cut.z_step_size;
+      } else if (cut.z_step_size <= 0) {
+        errors.push("z_step_size must be greater than 0");
+        delete cut.z_step_size;
+      }
+    }
+    if (cut.z_step_size === undefined) {
+      cut.z_step_size = workspace.z_step_size;
+    }
+
+    // z_top lets cuts save time by skipping initial layers.
+    if (cut.z_top !== undefined) {
+      if (typeof cut.z_top != "number") {
+        errors.push("invalid cut z_top: " + cut.z_top);
+        delete cut.z_top;
+      }
+    }
+    if (cut.z_top === undefined) {
+      cut.z_top = 0;
+    }
+
+    var cutType = cut.type;
+    if (_cutTypes[cutType]) {
+      try {
+        var ret = _cutTypes[cutType].call({}, workspace, cut);
+
+        // Check the response as a safety for any poorly implemented cut code.
+        if (ret.warnings === undefined || ret.warnings === null) {
+          throw "response of [" + cutType + "] did not define 'warning'";
+        }
+        if (ret.gcode === undefined || ret.gcode === null) {
+          throw "response of [" + cutType + "] did not define 'gcode'";
+        }
+
+        // Add the response to our compiled list of commands.
+        commands.push("");
+        commands.push("; begin cut: " + cut.type);
+        commands = commands.concat(ret.gcode);
+        commands.push("; end cut: " + cut.type);
+        warnings = warnings.concat(ret.warnings);
+      } catch (err) {
+        errors.push(err);
+        console.error(err);
+      }
+    } else {
+      errors.push("unknown cut type [" + cutType + "]");
+    }
+    return {
+      "warnings": warnings,
+      "errors": errors,
+      "gcode": commands
+    };
+  }
+
+  /**
    * Convert a JSON object which represents a job to a g-code file for
    * sending to a CNC router.
    *
@@ -46,7 +122,7 @@ window.opencut = function() {
     var commands = [];
 
     // Build up a workspace description.
-    var workspace = {};
+    var workspace = {gcodeForCut: gcodeForCut};
     workspace.units = "mm";
     if (job.units == "inch") {
       workspace.units = "inch";
@@ -79,11 +155,13 @@ window.opencut = function() {
       }
     }
     workspace.z_step_size = (workspace.units == "mm") ? 1 : 0.125;
-    if (!job.z_step_size) {
+    if (job.z_step_size == null) {
       warnings.push("z_step_size not specified. using default [" + workspace.z_step_size + "]");
     } else {
       if (typeof job.z_step_size != "number") {
         errors.push("invalid z_step_size: " + job.z_step_size);
+      } else if (job.z_step_size <= 0) {
+        errors.push("z_step_size must be greater than 0");
       } else {
         workspace.z_step_size = job.z_step_size;
       }
@@ -106,6 +184,15 @@ window.opencut = function() {
       }
     }
 
+    // If we have any errors at this point, it is unsafe to continue.
+    if (errors.length > 0) {
+      return {
+        "warnings": warnings,
+        "errors": errors,
+        "gcode": []
+      };
+    }
+
     // Configure the job parameters.
     commands.push("G90"); // Absolute distance mode
     commands.push((workspace.units == "inch") ? "G20" : "G21");
@@ -116,61 +203,10 @@ window.opencut = function() {
       job.cuts = [];
     }
     for (var i = 0; i < job.cuts.length; i++) {
-      var cut = job.cuts[i];
-
-      // Use the workspace default depth if a cut depth was not specified.
-      if (cut.depth === undefined && workspace.default_depth !== undefined) {
-        cut.depth = workspace.default_depth;
-      }
-
-      // Let cuts override the workspace z_step_size.
-      if (cut.z_step_size !== undefined) {
-        if (typeof cut.z_step_size != "number") {
-          errors.push("invalid cut z_step_size: " + cut.z_step_size);
-          delete cut.z_step_size;
-  	    }
-      }
-	    if (cut.z_step_size === undefined) {
-        cut.z_step_size = job.z_step_size;
-      }
-
-      // z_top lets cuts save time by skipping initial layers.
-      if (cut.z_top !== undefined) {
-        if (typeof cut.z_top != "number") {
-          errors.push("invalid cut z_top: " + cut.z_top);
-          delete cut.z_top;
-  	    }
-      }
-	    if (cut.z_top === undefined) {
-        cut.z_top = 0;
-      }
-
-      var cutType = cut.type;
-      if (_cutTypes[cutType]) {
-        try {
-          var ret = _cutTypes[cutType].call({}, workspace, cut);
-
-          // Check the response as a safety for any poorly implemented cut code.
-          if (ret.warnings === undefined || ret.warnings === null) {
-            throw "response of [" + cutType + "] did not define 'warning'";
-          }
-          if (ret.gcode === undefined || ret.gcode === null) {
-            throw "response of [" + cutType + "] did not define 'gcode'";
-          }
-
-          // Add the response to our compiled list of commands.
-          commands.push("");
-          commands.push("; begin cut: " + cut.type);
-          commands = commands.concat(ret.gcode);
-          commands.push("; end cut: " + cut.type);
-          warnings = warnings.concat(ret.warnings);
-        } catch (err) {
-          errors.push(err);
-          console.error(err);
-        }
-      } else {
-        errors.push("unknown cut type [" + cutType + "]");
-      }
+      var cutGcode = gcodeForCut(workspace, job.cuts[i]);
+      warnings = warnings.concat(cutGcode.warnings);
+      errors = errors.concat(cutGcode.errors);
+      commands = commands.concat(cutGcode.gcode);
     }
 
     // Limit the precision of each command. It makes the lines shorter and there
