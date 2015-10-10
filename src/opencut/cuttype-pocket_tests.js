@@ -1,3 +1,5 @@
+/*global deepEqual*/
+
 module("cuttype: pocket");
 
 test("rectangle", function() {
@@ -592,4 +594,55 @@ test("rectangle z-top", function() {
 
   var results = window.opencut.toGCode(job);
   deepEqual(results, expected);
+});
+
+test("minimal circle", function() {
+  var job = {
+    "units": "mm",
+    "bit_diameter": 4,
+    "feed_rate": 10,
+    "plunge_rate": 5,
+    "safety_height": 5,
+    "z_step_size": 1,
+    "cuts": [{
+      "type": "pocket",
+      "depth": -3,
+      "shape": {
+        "type": "circle",
+        "center": [0, 0],
+        "radius": 2
+      },
+    }]
+  };
+
+  var expected = {
+    "errors": [],
+    "warnings": [],
+    "gcode": [
+      "G90",
+      "G21",
+      "",
+      "; begin cut: pocket",
+      "G90",
+      "G1 Z5 F20",
+      "G0 X0 Y0 F10",
+      "G1 X0 Y0 Z1 F10",
+      "G4 P0",
+      "G1 Z-1 F5",
+      "G1 Z0 F20",
+      "G1 X0 Y0 Z0 F10",
+      "G4 P0",
+      "G1 Z-2 F5",
+      "G1 Z0 F20",
+      "G1 X0 Y0 Z-1 F10",
+      "G4 P0",
+      "G1 Z-3 F5",
+      "G1 Z0 F20",
+      "G1 Z5 F20",
+      "G4 P0",
+      "; end cut: pocket"
+    ]
+  };
+
+  deepEqual(window.opencut.toGCode(job), expected);
 });
