@@ -231,7 +231,7 @@
         gcode.push("G2 X" + (x + rmax) + " Y" + y + " I" + 0 + " J" + (-rmax));
         gcode.push("G2 X" + x + " Y" + (y - rmax) + " I" + (-rmax) + " J" + 0);
         gcode.push("G2 X" + (x - rmax) + " Y" + y + " I" + 0 + " J" + rmax);
-        gcode.push("G2 X" + x + " Y" + (y + rmax) + " I" + r + " J" + 0);
+        gcode.push("G2 X" + x + " Y" + (y + rmax) + " I" + rmax + " J" + 0);
       } else {
         gcode.push("G1 Z" + cut.z_top + " F" + workspace.z_rapid_rate);
       }
