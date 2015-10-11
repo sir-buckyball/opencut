@@ -1,3 +1,5 @@
+/*global deepEqual*/
+
 module("cuttype: pocket");
 
 test("rectangle", function() {
@@ -592,4 +594,112 @@ test("rectangle z-top", function() {
 
   var results = window.opencut.toGCode(job);
   deepEqual(results, expected);
+});
+
+test("minimal circle", function() {
+  var job = {
+    "units": "mm",
+    "bit_diameter": 4,
+    "feed_rate": 10,
+    "plunge_rate": 5,
+    "safety_height": 5,
+    "z_step_size": 1,
+    "cuts": [{
+      "type": "pocket",
+      "depth": -3,
+      "shape": {
+        "type": "circle",
+        "center": [0, 0],
+        "radius": 2
+      },
+    }]
+  };
+
+  var expected = {
+    "errors": [],
+    "warnings": [],
+    "gcode": [
+      "G90",
+      "G21",
+      "",
+      "; begin cut: pocket",
+      "G90",
+      "G1 Z5 F20",
+      "G0 X0 Y0 F10",
+      "G1 X0 Y0 Z1 F10",
+      "G4 P0",
+      "G1 Z-1 F5",
+      "G1 Z0 F20",
+      "G1 X0 Y0 Z0 F10",
+      "G4 P0",
+      "G1 Z-2 F5",
+      "G1 Z0 F20",
+      "G1 X0 Y0 Z-1 F10",
+      "G4 P0",
+      "G1 Z-3 F5",
+      "G1 Z0 F20",
+      "G1 Z5 F20",
+      "G4 P0",
+      "; end cut: pocket"
+    ]
+  };
+
+  deepEqual(window.opencut.toGCode(job), expected);
+});
+
+test("circle radius not a multiple of bit diameter", function() {
+  var job = {
+    "units": "mm",
+    "bit_diameter": 2,
+    "feed_rate": 10,
+    "plunge_rate": 5,
+    "safety_height": 5,
+    "z_step_size": 1,
+    "cuts": [{
+      "type": "pocket",
+      "depth": -1,
+      "shape": {
+        "type": "circle",
+        "center": [0, 0],
+        "radius": 3.5
+      },
+    }]
+  };
+
+  var expected = {
+    "errors": [],
+    "warnings": [],
+    "gcode": [
+      "G90",
+      "G21",
+      "",
+      "; begin cut: pocket",
+      "G90",
+      "G1 Z5 F20",
+      "G0 X0 Y0 F10",
+      "G1 X0 Y0 Z1 F10",
+      "G4 P0",
+      "G1 Z-1 F5",
+      "G1 X0 Y1 F10",
+      "G2 X1 Y0 I0 J-1",
+      "G2 X0 Y-1 I-1 J0",
+      "G2 X-1 Y0 I0 J1",
+      "G2 X0 Y1 I1 J0",
+      "G1 X0 Y2 F10",
+      "G2 X2 Y0 I0 J-2",
+      "G2 X0 Y-2 I-2 J0",
+      "G2 X-2 Y0 I0 J2",
+      "G2 X0 Y2 I2 J0",
+      "G1 X0 Y2.5 F10",
+      "G2 X2.5 Y0 I0 J-2.5",
+      "G2 X0 Y-2.5 I-2.5 J0",
+      "G2 X-2.5 Y0 I0 J2.5",
+      "G2 X0 Y2.5 I2.5 J0",
+      "G1 Z5 F20",
+      "G4 P0",
+      "; end cut: pocket"
+    ]
+  };
+
+  deepEqual(window.opencut.toGCode(job), expected);
 });

@@ -120,12 +120,16 @@
         z = Math.max(cut.depth, z - cut.z_step_size);
       }
 
-      // Drop down, go around.
+      // Drop down, go around (if we can, otherwise go up to release material).
       gcode.push("G1 Z" + z + " F" + workspace.plunge_rate);
-      gcode.push("G2 X" + (x + r) + " Y" + y + " I" + 0 + " J" + (-r) + " F" + workspace.feed_rate);
-      gcode.push("G2 X" + x + " Y" + (y - r) + " I" + (-r) + " J" + 0 + " F" + workspace.feed_rate);
-      gcode.push("G2 X" + (x - r) + " Y" + y + " I" + 0 + " J" + r + " F" + workspace.feed_rate);
-      gcode.push("G2 X" + x + " Y" + (y + r) + " I" + r + " J" + 0 + " F" + workspace.feed_rate);
+      if (r == 0) {
+        gcode.push("G1 Z" + cut.z_top + " F" + workspace.z_rapid_rate);
+      } else {
+        gcode.push("G2 X" + (x + r) + " Y" + y + " I" + 0 + " J" + (-r) + " F" + workspace.feed_rate);
+        gcode.push("G2 X" + x + " Y" + (y - r) + " I" + (-r) + " J" + 0 + " F" + workspace.feed_rate);
+        gcode.push("G2 X" + (x - r) + " Y" + y + " I" + 0 + " J" + r + " F" + workspace.feed_rate);
+        gcode.push("G2 X" + x + " Y" + (y + r) + " I" + r + " J" + 0 + " F" + workspace.feed_rate);
+      }
     }
 
     // Bring the cutter up to a safe movement area.

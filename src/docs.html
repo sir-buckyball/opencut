@@ -148,7 +148,7 @@ cuts:
   shape: {type: rectangle, origin: [0, 0], size: [3, 1.5]}
 </pre>
 
-        <p>Profile cuts can also be specifed as a series of points, specified in counter-clockwise order.</p>
+        <p>Profile cuts can also be specifed as a closed series of points, in clockwise order.</p>
         <pre class="example">
 units: mm
 bit_diameter: 3
@@ -201,6 +201,35 @@ cuts:
           <a href="https://github.com/sir-buckyball/opencut" target="_blank">github source code</a>
           for more details.</p>
       </section>
+
+        <section id="cut-drill">
+        <h3>screwhole</h3>
+        <p>Make a hole for a screw, optionally milling a wider top for a pan-head screw top.</p>
+        <div class="spec">
+          <strong>Cut[screwhole]</strong>
+          <ul>
+            <li><strong>points</strong> <em>{array&lt;array&lt;number&gt;&gt;}</em> - A list of points to make holes</li>
+            <li><strong>shaft_diameter</strong> <em>{number}</em> - The diameter of the screw shaft</li>
+            <li><strong>depth</strong> <em>{number}</em> - The depth to mill the hole.</li>
+            <li><strong>cap_diameter</strong> <em>{number, optional}</em> - The diameter of the screw cap</li>
+            <li><strong>cap_depth</strong> <em>{number, optional}</em> - The depth to mill the screw cap area.</li>
+          </ul>
+        </div>
+        <pre class="example">
+units: mm
+bit_diameter: 3.175
+feed_rate: 250
+plunge_rate: 125
+
+cuts:
+- type: screwhole
+  depth: -5
+  shaft_diameter: 3
+  cap_diameter: 6
+  cap_depth: -1.5
+  points: [[0, 0], [0, 15], [15, 0], [15, 15]]
+</pre>
+    </section>
     </article>
   </body>
 </html>

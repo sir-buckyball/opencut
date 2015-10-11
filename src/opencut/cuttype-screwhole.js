@@ -46,8 +46,7 @@ window.opencut.registerCutType("screwhole", function generatePathCut(workspace, 
   for (var i = 0; i < cut.points.length; i++) {
     if (cut.cap_diameter !== undefined) {
       var capCut = {
-        "type": "profile",
-        "side": "inside",
+        "type": "pocket",
         "depth": cut.cap_depth,
         "shape": {
           "type": "circle",
@@ -62,8 +61,7 @@ window.opencut.registerCutType("screwhole", function generatePathCut(workspace, 
     }
 
     var shaftCut = {
-      "type": "profile",
-      "side": "inside",
+      "type": "pocket",
       "depth": cut.depth,
       "z_step_size": workspace.z_step_size,
       "z_top": cut.cap_depth,

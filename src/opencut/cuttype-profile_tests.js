@@ -235,6 +235,52 @@ test("circle inside", function() {
   deepEqual(results, expected);
 });
 
+test("tiny circle inside", function() {
+  var job = {
+    "name": "test_job",
+    "units": "mm",
+    "bit_diameter": 3,
+    "feed_rate": 10,
+    "plunge_rate": 5,
+    "safety_height": 2,
+    "z_step_size": 1,
+    "cuts": [{
+    "type": "profile",
+      "depth": -2,
+      "side": "inside",
+      "shape": {
+        "type": "circle",
+        "center": [0, 0],
+        "radius": 1.5
+      }
+    }]
+  };
+
+  var expected = {
+    "errors": [],
+    "warnings": [],
+    "gcode": [
+      "G90",
+      "G21",
+      "",
+      "; begin cut: profile",
+      "G90",
+      "G1 Z2 F20",
+      "G0 X0 Y0 F10",
+      "G1 Z-1 F5",
+      "G1 Z0 F20",
+      "G1 Z-2 F5",
+      "G1 Z0 F20",
+      "G1 Z2 F20",
+      "G4 P0",
+      "; end cut: profile"
+    ]
+  };
+
+  var results = window.opencut.toGCode(job);
+  deepEqual(results, expected);
+});
+
 test("circle outside", function() {
   var job = {
     "name": "test_job",

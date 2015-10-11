@@ -205,7 +205,7 @@
       if (z <= cut.depth) {
         break;
       } else if (z > cut.z_top) {
-        z = Math.max(cut.depth, cut.z_top -cut.z_step_size);
+        z = Math.max(cut.depth, cut.z_top - cut.z_step_size);
       } else {
         z = Math.max(cut.depth, z - cut.z_step_size);
       }
@@ -217,20 +217,24 @@
       gcode.push("G1 Z" + z + " F" + workspace.plunge_rate);
 
       // Make a bunch of circles radiating outward.
-      for (var r = workspace.bit_diameter / 2; r < rmax; r +=+ workspace.bit_diameter / 2) {
-        gcode.push("G1 X" + x + " Y" + (y + r) + " F" + workspace.feed_rate);
-        gcode.push("G2 X" + (x + r) + " Y" + y + " I" + 0 + " J" + (-r));
-        gcode.push("G2 X" + x + " Y" + (y - r) + " I" + (-r) + " J" + 0);
-        gcode.push("G2 X" + (x - r) + " Y" + y + " I" + 0 + " J" + r);
-        gcode.push("G2 X" + x + " Y" + (y + r) + " I" + r + " J" + 0);
-      }
+      if (rmax > 0) {
+        for (var r = workspace.bit_diameter / 2; r < rmax; r +=+ workspace.bit_diameter / 2) {
+          gcode.push("G1 X" + x + " Y" + (y + r) + " F" + workspace.feed_rate);
+          gcode.push("G2 X" + (x + r) + " Y" + y + " I" + 0 + " J" + (-r));
+          gcode.push("G2 X" + x + " Y" + (y - r) + " I" + (-r) + " J" + 0);
+          gcode.push("G2 X" + (x - r) + " Y" + y + " I" + 0 + " J" + r);
+          gcode.push("G2 X" + x + " Y" + (y + r) + " I" + r + " J" + 0);
+        }
 
-      // Make the final round.
-      gcode.push("G1 X" + x + " Y" + (y + rmax) + " F" + workspace.feed_rate);
-      gcode.push("G2 X" + (x + rmax) + " Y" + y + " I" + 0 + " J" + (-rmax));
-      gcode.push("G2 X" + x + " Y" + (y - rmax) + " I" + (-rmax) + " J" + 0);
-      gcode.push("G2 X" + (x - rmax) + " Y" + y + " I" + 0 + " J" + rmax);
-      gcode.push("G2 X" + x + " Y" + (y + rmax) + " I" + r + " J" + 0);
+        // Make the final round.
+        gcode.push("G1 X" + x + " Y" + (y + rmax) + " F" + workspace.feed_rate);
+        gcode.push("G2 X" + (x + rmax) + " Y" + y + " I" + 0 + " J" + (-rmax));
+        gcode.push("G2 X" + x + " Y" + (y - rmax) + " I" + (-rmax) + " J" + 0);
+        gcode.push("G2 X" + (x - rmax) + " Y" + y + " I" + 0 + " J" + rmax);
+        gcode.push("G2 X" + x + " Y" + (y + rmax) + " I" + rmax + " J" + 0);
+      } else {
+        gcode.push("G1 Z" + cut.z_top + " F" + workspace.z_rapid_rate);
+      }
     }
 
     // Bring the cutter up to a safe movement area.
