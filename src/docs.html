@@ -219,8 +219,23 @@ cuts:
   cap_depth: -1.5
   points: [[0, 0], [0, 15], [15, 0], [15, 15]]
 </pre>
-    </section>
+      </section>
 
+      <section id="cut-gcode">
+        <h3>gcode</h3>
+        <p>A hack of a cut to allow arbitrary gcode to be embedded.</p>
+        <div class="spec">
+          <strong>Cut[gcode]</strong>
+          <ul>
+            <li><strong>gcode</strong> <em>{array&lt;string&gt;}</em> - A list of gcode commands</li>
+          </ul>
+        </div>
+        <pre class="example">
+cuts:
+ - type: "gcode"
+   gcode: ["M3", "M5"]
+</pre>
+      </section>
 
       <section id="advanced">
         <h2>advanced</h2>
