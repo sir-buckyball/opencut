@@ -124,6 +124,11 @@
       gcode.push("G1 Z" + z + " F" + workspace.plunge_rate);
       if (r == 0) {
         gcode.push("G1 Z" + cut.z_top + " F" + workspace.z_rapid_rate);
+      } else if (cut.side == "outside") {
+        gcode.push("G3 X" + (x - r) + " Y" + y + " I" + 0 + " J" + (-r) + " F" + workspace.feed_rate);
+        gcode.push("G3 X" + x + " Y" + (y - r) + " I" + r + " J" + 0 + " F" + workspace.feed_rate);
+        gcode.push("G3 X" + (x + r) + " Y" + y + " I" + 0 + " J" + r + " F" + workspace.feed_rate);
+        gcode.push("G3 X" + x + " Y" + (y + r) + " I" + (-r) + " J" + 0 + " F" + workspace.feed_rate);
       } else {
         gcode.push("G2 X" + (x + r) + " Y" + y + " I" + 0 + " J" + (-r) + " F" + workspace.feed_rate);
         gcode.push("G2 X" + x + " Y" + (y - r) + " I" + (-r) + " J" + 0 + " F" + workspace.feed_rate);

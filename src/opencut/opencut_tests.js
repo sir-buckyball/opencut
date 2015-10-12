@@ -1,3 +1,6 @@
+/*global deepEqual*/
+/*global ok*/
+
 module("opencut framework");
 
 test("empty job validation", function() {
@@ -98,4 +101,37 @@ test("critical errors", function() {
 
   var results = window.opencut.toGCode(job);
   deepEqual(results, expected);
+});
+
+test("default depth", function() {
+  window.opencut.registerCutType("depthcheck",
+    function generatePathCut(workspace, cut) {
+      return {"warnings": [], "gcode": ["G1 Z" + cut.depth]};
+    });
+
+  var job = {
+    "name": "test_job",
+    "units": "mm",
+    "bit_diameter": 3,
+    "feed_rate": 10,
+    "plunge_rate": 5,
+    "z_step_size": 1,
+    "default_depth": -5,
+    "cuts": [{"type": "depthcheck"}]
+  };
+
+  var expected = {
+    "warnings": [],
+    "errors": [],
+    "gcode": [
+      "G90",
+      "G21",
+      "",
+      "; begin cut: depthcheck",
+      "G1 Z-5",
+      "; end cut: depthcheck"
+    ]
+  };
+
+  deepEqual(window.opencut.toGCode(job), expected);
 });
