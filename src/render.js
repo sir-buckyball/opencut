@@ -1,3 +1,5 @@
+/*global paper*/
+
 function resizeView() {
   var minX = -0.01;
   var minY = -0.01;
@@ -38,41 +40,60 @@ function renderYaml(txt) {
 
   // Render the shapes which the cuts will be centered around.
   var cutShapes = new paper.Group();
-  for (var i = 0; i < job.cuts.length; i++) {
-    var cut = job.cuts[i];
-    if (cut.points && cut.points.length > 0) {
-      if (cut.type == "drill") {
-        for (var k = 0; k < cut.points.length; k++) {
-          var drillSpot = new paper.Shape.Circle(
-            new paper.Point(cut.points[k]), job.bit_diameter / 2);
-          drillSpot.strokeColor = "black";
-          drillSpot.fillColor = "grey";
-          cutShapes.addChild(drillSpot);
+  if (job.cuts != null) {
+    for (var i = 0; i < job.cuts.length; i++) {
+      var cut = job.cuts[i];
+      if (cut.points && cut.points.length > 0) {
+        if (cut.type == "drill") {
+          for (var k = 0; k < cut.points.length; k++) {
+            var drillSpot = new paper.Shape.Circle(
+              new paper.Point(cut.points[k]), job.bit_diameter / 2);
+            drillSpot.strokeColor = "black";
+            drillSpot.fillColor = "grey";
+            cutShapes.addChild(drillSpot);
+          }
+        } else if (cut.type == "screwhole") {
+          for (var k = 0; k < cut.points.length; k++) {
+            var screwSpot = new paper.Shape.Circle(
+              new paper.Point(cut.points[k]), cut.shaft_diameter / 2);
+            screwSpot.strokeColor = "black";
+            screwSpot.fillColor = "grey";
+            if (cut.cap_diameter > 0) {
+              var capSpot = new paper.Shape.Circle(
+                new paper.Point(cut.points[k]), cut.cap_diameter / 2);
+              capSpot.strokeColor = "black";
+              screwSpot.strokeColor = "grey";
+              capSpot.fillColor = "lightgrey";
+              cutShapes.addChild(capSpot);
+            }
+            cutShapes.addChild(screwSpot);
+          }
+        } else {
+          var path = new paper.Path();
+          path.moveTo(new paper.Point(cut.points[0]));
+          for (var j = 1; j < cut.points.length; j++) {
+            path.lineTo(new paper.Point(cut.points[j]));
+          }
+          path.strokeColor = "black"
+          cutShapes.addChild(path);
         }
-      } else {
-        var path = new paper.Path();
-        path.moveTo(new paper.Point(cut.points[0]));
-        for (var j = 1; j < cut.points.length; j++) {
-          path.lineTo(new paper.Point(cut.points[j]));
+      }
+
+      if (cut.shape) {
+        if (cut.shape.type == "circle") {
+          var shapeCircle = new paper.Shape.Circle(
+            new paper.Point(cut.shape.center), cut.shape.radius);
+          shapeCircle.strokeColor = "black";
+          cutShapes.addChild(shapeCircle);
+        } else if (cut.shape.type == "rectangle") {
+          var shapeRect = new paper.Shape.Rectangle(
+            new paper.Point(cut.shape.origin), new paper.Size(cut.shape.size));
+          shapeRect.strokeColor = "black";
+          cutShapes.addChild(shapeRect);
+        } else {
+          console.log("unknown shape: " + cut.shape.type);
         }
-        cutShapes.addChild(path);
       }
-    }
-
-    if (cut.shape) {
-      if (cut.shape.type == "circle") {
-        cutShapes.addChild(new paper.Shape.Circle(
-          new paper.Point(cut.shape.center), cut.shape.radius));
-      } else if (cut.shape.type == "rectangle") {
-        cutShapes.addChild(new paper.Shape.Rectangle(
-          new paper.Point(cut.shape.origin), new paper.Size(cut.shape.size)));
-      } else {
-        console.log("unknown shape: " + cut.shape.type);
-      }
-    }
-
-    if (cutShapes.lastChild) {
-      cutShapes.lastChild.strokeColor = (cut.color !== undefined) ? cut.color : "black";
     }
   }
 
