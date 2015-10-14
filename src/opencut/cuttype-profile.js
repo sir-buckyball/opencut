@@ -234,10 +234,9 @@
           // For end-joined cuts, we are already in position.
           if (!joinEnds || k == 0) {
             if (cornerAngle > 0) {
-              r = r / Math.sin(cornerAngle / 2);
               gcode.push("G0" +
-                " X" + (pt[0] + r * Math.cos(a1 + cornerAngle / 2)) +
-                " Y" + (pt[1] - r * Math.sin(a1 + cornerAngle / 2)) +
+                " X" + (pt[0] + r / Math.sin(cornerAngle / 2) * Math.cos(a1 + cornerAngle / 2)) +
+                " Y" + (pt[1] - r / Math.sin(cornerAngle / 2) * Math.sin(a1 + cornerAngle / 2)) +
                 " F" + workspace.feed_rate);
             } else {
               gcode.push("G0" +
