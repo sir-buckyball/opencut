@@ -676,8 +676,7 @@ test("points triangle outside", function() {
       "G0 X4.0559 Y0.1118 F10",
       "G1 Z-0.1 F5",
       "G1 X2.0559 Y1.1118 F10",
-      "G1 X2 Y1.13975 F10",
-      "G1 X1.9441 Y1.1118 F10",
+      "G3 X1.9441 Y1.1118 I-0.0559 J-0.1118 F10",
       "G1 X-0.0559 Y0.1118 F10",
       "G1 Z0.25 F20",
       "G4 P0",
@@ -702,7 +701,7 @@ test("points triangle inside", function() {
       "type": "profile",
       "depth": -0.1,
       "side": "inside",
-      "points": [[4, 0], [2, 1], [0, 0]]
+      "points": [[0, 0], [2, 1], [4, 0]]
     }]
   };
 
@@ -716,12 +715,10 @@ test("points triangle inside", function() {
       "; begin cut: profile",
       "G90",
       "G1 Z0.25 F20",
-      "G0 X4.0559 Y0.1118 F10",
+      "G0 X0.0559 Y-0.1118 F10",
       "G1 Z-0.1 F5",
-      "G1 X2.0559 Y1.1118 F10",
-      "G1 X2 Y1.13975 F10",
-      "G1 X1.9441 Y1.1118 F10",
-      "G1 X-0.0559 Y0.1118 F10",
+      "G1 X2 Y0.86025 F10",
+      "G1 X3.9441 Y-0.1118 F10",
       "G1 Z0.25 F20",
       "G4 P0",
       "; end cut: profile"
