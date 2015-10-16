@@ -194,7 +194,7 @@
       } else {
         z = Math.max(cut.depth, z - cut.z_step_size);
       }
-      var didDropDown = false;
+      var needStartPositioning = (k == 0 || !joinEnds);
 
       // Start running around the points.
       var pt = cut.points[0];
@@ -228,29 +228,8 @@
 
         // Convenience variable for the bit radius. We negate it for inside cuts.
         var r = workspace.bit_diameter / 2;
-
-        if (!didDropDown) {
-          didDropDown = true;
-          // For end-joined cuts, we are already in position.
-          if (!joinEnds || k == 0) {
-            if (cornerAngle > 0) {
-              gcode.push("G0" +
-                " X" + (pt[0] + r / Math.sin(cornerAngle / 2) * Math.cos(a1 + cornerAngle / 2)) +
-                " Y" + (pt[1] - r / Math.sin(cornerAngle / 2) * Math.sin(a1 + cornerAngle / 2)) +
-                " F" + workspace.feed_rate);
-            } else {
-              gcode.push("G0" +
-                  " X" + (pt[0] + r * Math.cos(a2)) +
-                  " Y" + (pt[1] - r * Math.sin(a2)) +
-                  " F" + workspace.feed_rate);
-            }
-          }
-          gcode.push("G1 Z" + z + " F" + workspace.plunge_rate);
-          continue;
-        }
-
-        var toX = pt[0] + r * Math.cos(a1);
-        var toY = pt[1] - r * Math.sin(a1);
+        var toX = pt[0] + r * Math.cos(j == 0 ? a2 : a1);
+        var toY = pt[1] - r * Math.sin(j == 0 ? a2 : a1);
         if (cornerAngle > 0) {
           // TODO: There is some evidence that cornerAngle is really
           // (90 - alpha / 2) where alpha is the angle between 3 points.
@@ -259,11 +238,20 @@
           toX = pt[0] + dist * Math.cos(a1 + cornerAngle / 2);
           toY = pt[1] - dist * Math.sin(a1 + cornerAngle / 2);
         }
-        gcode.push("G1 X" + toX + " Y" + toY + " F" + workspace.feed_rate);
+
+        if (needStartPositioning) {
+          gcode.push("G0 X" + toX + " Y" + toY + " F" + workspace.feed_rate);
+          gcode.push("G1 Z" + z + " F" + workspace.plunge_rate);
+          needStartPositioning = false;
+        } else if (j == 0) {
+          gcode.push("G1 Z" + z + " F" + workspace.plunge_rate);
+        } else {
+          gcode.push("G1 X" + toX + " Y" + toY + " F" + workspace.feed_rate);
+        }
 
         // When we are on the outside of an angle, we need to arc around the
         // corner to keep it sharp without going out of our way.
-        if (!(pt[0] == next[0] && pt[1] == next[1])) {
+        if (!(pt[0] == next[0] && pt[1] == next[1]) && j > 0) {
           if (cornerAngle < 0) {
             // TODO: arc interpolations over 120˚ are not recommended. split this arc.
             gcode.push("G3" +

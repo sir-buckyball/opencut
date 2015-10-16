@@ -701,7 +701,7 @@ test("points triangle inside", function() {
       "type": "profile",
       "depth": -0.1,
       "side": "inside",
-      "points": [[0, 0], [2, 1], [4, 0]]
+      "points": [[0, 0], [2, 1], [4, 0], [0, 0]]
     }]
   };
 
@@ -715,10 +715,11 @@ test("points triangle inside", function() {
       "; begin cut: profile",
       "G90",
       "G1 Z0.25 F20",
-      "G0 X0.0559 Y-0.1118 F10",
+      "G0 X0.52951 Y0.125 F10",
       "G1 Z-0.1 F5",
       "G1 X2 Y0.86025 F10",
-      "G1 X3.9441 Y-0.1118 F10",
+      "G1 X3.47049 Y0.125 F10",
+      "G1 X0.52951 Y0.125 F10",
       "G1 Z0.25 F20",
       "G4 P0",
       "; end cut: profile"
