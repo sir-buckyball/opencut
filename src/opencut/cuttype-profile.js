@@ -243,7 +243,7 @@
           toX = pt[0] + r * Math.cos(a2) - coff * Math.sin(a2);
           toY = pt[1] - r * Math.sin(a2) - coff * Math.cos(a2);
         }
-        if (cornerAngle > 0 && cut.corner_radius <= 0) {
+        if (cornerAngle > 0 && (cut.corner_radius <= 0 || cut.corner_compensation)) {
           // TODO: There is some evidence that cornerAngle is really
           // (90 - alpha / 2) where alpha is the angle between 3 points.
           // The distance calculation should really be sin().
@@ -277,7 +277,16 @@
                 " F" + workspace.feed_rate)
 
           } else if (cornerAngle > 0) {
-            if (cut.corner_radius > 0) {
+            // Cut to the corner if compensation is enabled.
+            if (cut.corner_compensation === true) {
+              var dx = pt[0] - toX;
+              var dy = pt[1] - toY;
+              var mag = (workspace.bit_diameter / 2) / Math.sqrt(dx * dx + dy * dy);
+              gcode.push("G1 X" + (pt[0] - (dx * mag)) + " Y" + (pt[1] - (dy * mag)) +
+                  " F" + workspace.feed_rate);
+              gcode.push("G1 X" + toX + " Y" + toY + " F" + workspace.feed_rate);
+
+            } else if (cut.corner_radius > 0) {
               // TODO: arc interpolations over 120˚ are not recommended. split this arc.
               gcode.push("G2" +
                   " X" + (pt[0] + r * Math.cos(a2) - coff * Math.sin(a2)) +
@@ -285,15 +294,6 @@
                   " I" + ((cr - r) * Math.cos(a1)) +
                   " J" + (-(cr - r) * Math.sin(a1)) +
                   " F" + workspace.feed_rate)
-
-            // Cut to the corner if compensation is enabled.
-            } else if (cut.corner_compensation === true) {
-              var dx = pt[0] - toX;
-              var dy = pt[1] - toY;
-              var mag = (workspace.bit_diameter / 2) / Math.sqrt(dx * dx + dy * dy);
-              gcode.push("G1 X" + (pt[0] - (dx * mag)) + " Y" + (pt[1] - (dy * mag)) +
-                  " F" + workspace.feed_rate);
-              gcode.push("G1 X" + toX + " Y" + toY + " F" + workspace.feed_rate);
             }
           }
         }

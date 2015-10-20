@@ -1205,7 +1205,7 @@ test("corner_radius with corner_compensation", function() {
       "side": "inside",
       "corner_compensation": true,
       "corner_radius": 2,
-      "points": [[0, 0], [0, 10], [10, 10], [20, 10]]
+      "points": [[0, 0], [0, 10], [10, 10], [10, 20]]
     }]
   };
 
@@ -1217,7 +1217,19 @@ test("corner_radius with corner_compensation", function() {
       "G20",
       "",
       "; begin cut: profile",
-      "; end cut: profile"
+      "G90",
+      "G1 Z1 F20",
+      "G0 X1 Y0 F10",
+      "G1 Z-1 F5",
+      "G1 X1 Y9 F10",
+      "G1 X0.70711 Y9.29289 F10",
+      "G1 X1 Y9 F10",
+      "G1 X8 Y9 F10",
+      "G3 X11 Y12 I0 J3 F10",
+      "G1 X11 Y20 F10",
+      "G1 Z1 F20",
+      "G4 P0",
+      "; end cut: profile",
     ]};
 
   var results = window.opencut.toGCode(job);
@@ -1289,3 +1301,5 @@ test("non-axial corner_radius", function() {
   var results = window.opencut.toGCode(job);
   deepEqual(results, expected);
 });
+
+// TODO(clayb): add a test for an inner corner_radius smaller than the bit.
