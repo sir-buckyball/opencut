@@ -1179,14 +1179,11 @@ test("inside corner radius too small", function() {
   };
 
   var expected = {
-    "errors": [],
-    "warnings": ["corner_radius too big for point segment"],
+    "errors": ["corner_radius [20] is too large for point [0,10]"],
+    "warnings": [],
     "gcode": [
       "G90",
       "G20",
-      "",
-      "; begin cut: profile",
-      "; end cut: profile"
     ]};
 
   var results = window.opencut.toGCode(job);

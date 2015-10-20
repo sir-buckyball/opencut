@@ -234,6 +234,9 @@
         var r = workspace.bit_diameter / 2;
         var cr = (!joinEnds && (j == 0 || j == cut.points.length - 1)) ? 0 : cut.corner_radius;
         var coff = -cr * Math.tan(Math.abs(cornerAngle) / 2);
+        if (coff * coff > Math.pow(pt[0] - prev[0], 2) + Math.pow(pt[1] - prev[1], 2)) {
+          throw "corner_radius [" + cut.corner_radius + "] is too large for point " + JSON.stringify(pt);
+        }
         var toX = pt[0] + r * Math.cos(a1) + coff * Math.sin(a1);
         var toY = pt[1] - r * Math.sin(a1) + coff * Math.cos(a1);
         if (needStartPositioning) {
