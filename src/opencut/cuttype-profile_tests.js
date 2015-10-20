@@ -1063,3 +1063,166 @@ test("circle inside", function() {
   var results = window.opencut.toGCode(job);
   deepEqual(results, expected);
 });
+
+test("outside corner radius", function() {
+  var job = {
+    "name": "test_job",
+    "units": "inch",
+    "bit_diameter": 2,
+    "feed_rate": 10,
+    "plunge_rate": 5,
+    "safety_height": 1,
+    "z_step_size": 1,
+    "cuts": [{
+      "type": "profile",
+      "depth": -1,
+      "side": "outside",
+      "corner_radius": 2,
+      "points": [[0, 0], [0, 10], [10, 10], [20, 0], [10, 0]]
+    }]
+  };
+
+  var expected = {
+    "errors": [],
+    "warnings": [],
+    "gcode": [
+      "G90",
+      "G20",
+      "",
+      "; begin cut: profile",
+      "G90",
+      "G1 Z1 F20",
+      "G0 X10 Y-1 F10",
+      "G1 Z-1 F5",
+      "G1 X15.17157 Y-1 F10",
+      "G3 X17.29289 Y4.12132 I0 J3 F10",
+      "G1 X11.29289 Y10.12132 F10",
+      "G3 X9.17157 Y11 I-2.12132 J-2.12132 F10",
+      "G1 X2 Y11 F10",
+      "G3 X-1 Y8 I0 J-3 F10",
+      "G1 X-1 Y0 F10",
+      "G1 Z1 F20",
+      "G4 P0",
+      "; end cut: profile"
+    ]
+  };
+
+  var results = window.opencut.toGCode(job);
+  deepEqual(results, expected);
+});
+
+test("inside corner radius", function() {
+  var job = {
+    "name": "test_job",
+    "units": "inch",
+    "bit_diameter": 2,
+    "feed_rate": 10,
+    "plunge_rate": 5,
+    "safety_height": 1,
+    "z_step_size": 1,
+    "cuts": [{
+      "type": "profile",
+      "depth": -1,
+      "side": "inside",
+      "corner_radius": 2,
+      "points": [[0, 0], [0, 10], [10, 10], [20, 0], [10, 0], [0, 0]]
+    }]
+  };
+
+  var expected = {
+    "errors": [],
+    "warnings": [],
+    "gcode": [
+      "G90",
+      "G20",
+      "",
+      "; begin cut: profile",
+      "G90",
+      "G1 Z1 F20",
+      "G0 X1 Y2 F10",
+      "G1 Z-1 F5",
+      "G1 X1 Y8 F10",
+      "G2 X2 Y9 I1 J0 F10",
+      "G1 X9.17157 Y9 F10",
+      "G2 X9.87868 Y8.70711 I0 J-1 F10",
+      "G1 X15.87868 Y2.70711 F10",
+      "G2 X15.17157 Y1 I-0.70711 J-0.70711 F10",
+      "G1 X10 Y1 F10",
+      "G1 X2 Y1 F10",
+      "G2 X1 Y2 I0 J1 F10",
+      "G1 Z1 F20",
+      "G4 P0",
+      "; end cut: profile"
+    ]
+  };
+
+  var results = window.opencut.toGCode(job);
+  deepEqual(results, expected);
+});
+
+test("inside corner radius too small", function() {
+  var job = {
+    "name": "test_job",
+    "units": "inch",
+    "bit_diameter": 2,
+    "feed_rate": 10,
+    "plunge_rate": 5,
+    "safety_height": 1,
+    "z_step_size": 1,
+    "cuts": [{
+      "type": "profile",
+      "depth": -1,
+      "side": "outside",
+      "corner_radius": 20,
+      "points": [[0, 0], [0, 10], [10, 10]]
+    }]
+  };
+
+  var expected = {
+    "errors": [],
+    "warnings": ["corner_radius too big for point segment"],
+    "gcode": [
+      "G90",
+      "G20",
+      "",
+      "; begin cut: profile",
+      "; end cut: profile"
+    ]};
+
+  var results = window.opencut.toGCode(job);
+  deepEqual(results, expected);
+});
+
+test("corner_radius with corner_compensation", function() {
+  var job = {
+    "name": "test_job",
+    "units": "inch",
+    "bit_diameter": 2,
+    "feed_rate": 10,
+    "plunge_rate": 5,
+    "safety_height": 1,
+    "z_step_size": 1,
+    "cuts": [{
+      "type": "profile",
+      "depth": -1,
+      "side": "inside",
+      "corner_compensation": true,
+      "corner_radius": 2,
+      "points": [[0, 0], [0, 10], [10, 10], [20, 10]]
+    }]
+  };
+
+  var expected = {
+    "errors": [],
+    "warnings": [],
+    "gcode": [
+      "G90",
+      "G20",
+      "",
+      "; begin cut: profile",
+      "; end cut: profile"
+    ]};
+
+  var results = window.opencut.toGCode(job);
+  deepEqual(results, expected);
+});
