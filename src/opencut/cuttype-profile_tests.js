@@ -1226,3 +1226,69 @@ test("corner_radius with corner_compensation", function() {
   var results = window.opencut.toGCode(job);
   deepEqual(results, expected);
 });
+
+test("non-axial corner_radius", function() {
+  var job = {
+    "name": "test_job",
+    "units": "inch",
+    "bit_diameter": 2,
+    "feed_rate": 10,
+    "plunge_rate": 5,
+    "safety_height": 1,
+    "z_step_size": 1,
+    "cuts": [{
+      "type": "profile",
+      "depth": -1,
+      "side": "inside",
+      "corner_radius": 2,
+      "points": [[0, 10], [10, 20], [20, 0], [0, 10]]
+    }, {
+      "type": "profile",
+      "depth": -1,
+      "side": "outside",
+      "corner_radius": 2,
+      "points": [[0, 10], [10, 20], [20, 0], [0, 10]]
+    }]
+  };
+
+  var expected = {
+    "errors": [],
+    "warnings": [],
+    "gcode": [
+      "G90",
+      "G20",
+      "",
+      "; begin cut: profile",
+      "G90",
+      "G1 Z1 F20",
+      "G0 X2.66922 Y11.25501 F10",
+      "G1 Z-1 F5",
+      "G1 X8.74499 Y17.33078 F10",
+      "G2 X10.34652 Y17.07088 I0.70711 J-0.70711 F10",
+      "G1 X16.42229 Y4.91935 F10",
+      "G2 X15.08065 Y3.57771 I-0.89443 J-0.44721 F10",
+      "G1 X2.92912 Y9.65348 F10",
+      "G2 X2.66922 Y11.25501 I0.44721 J0.89443 F10",
+      "G1 Z1 F20",
+      "G4 P0",
+      "; end cut: profile",
+      "",
+      "; begin cut: profile",
+      "G90",
+      "G1 Z1 F20",
+      "G0 X2.03469 Y7.86462 F10",
+      "G1 Z-1 F5",
+      "G1 X14.18622 Y1.78885 F10",
+      "G3 X18.21115 Y5.81378 I1.34164 J2.68328 F10",
+      "G1 X12.13538 Y17.96531 F10",
+      "G3 X7.33078 Y18.74499 I-2.68328 J-1.34164 F10",
+      "G1 X1.25501 Y12.66922 F10",
+      "G3 X2.03469 Y7.86462 I2.12132 J-2.12132 F10",
+      "G1 Z1 F20",
+      "G4 P0",
+      "; end cut: profile",
+    ]};
+
+  var results = window.opencut.toGCode(job);
+  deepEqual(results, expected);
+});
