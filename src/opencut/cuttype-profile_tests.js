@@ -1302,4 +1302,45 @@ test("non-axial corner_radius", function() {
   deepEqual(results, expected);
 });
 
-// TODO(clayb): add a test for an inner corner_radius smaller than the bit.
+test("very small corner_radius", function() {
+  var job = {
+    "name": "test_job",
+    "units": "inch",
+    "bit_diameter": 2,
+    "feed_rate": 10,
+    "plunge_rate": 5,
+    "safety_height": 1,
+    "z_step_size": 1,
+    "cuts": [{
+      "type": "profile",
+      "depth": -1,
+      "side": "inside",
+      "corner_radius": 0.5,
+      "points": [[0, 0], [0, 10], [10, 10], [10, 20]]
+    }]
+  };
+
+  var expected = {
+    "errors": [],
+    "warnings": [],
+    "gcode": [
+      "G90",
+      "G20",
+      "",
+      "; begin cut: profile",
+      "G90",
+      "G1 Z1 F20",
+      "G0 X1 Y0 F10",
+      "G1 Z-1 F5",
+      "G1 X1 Y9 F10",
+      "G1 X9.5 Y9 F10",
+      "G3 X11 Y10.5 I0 J1.5 F10",
+      "G1 X11 Y20 F10",
+      "G1 Z1 F20",
+      "G4 P0",
+      "; end cut: profile",
+    ]};
+
+  var results = window.opencut.toGCode(job);
+  deepEqual(results, expected);
+});

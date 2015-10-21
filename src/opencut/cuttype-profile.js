@@ -232,7 +232,8 @@
 
         // Convenience variable for the bit radius.
         var r = workspace.bit_diameter / 2;
-        var cr = (!joinEnds && (j == 0 || j == cut.points.length - 1)) ? 0 : cut.corner_radius;
+        var cr = (!joinEnds && (j == 0 || j == cut.points.length - 1)) ? 0
+            : Math.max((cornerAngle > 0) ? r: 0, cut.corner_radius);
         var coff = -cr * Math.tan(Math.abs(cornerAngle) / 2);
         if (coff * coff > Math.pow(pt[0] - prev[0], 2) + Math.pow(pt[1] - prev[1], 2)) {
           throw "corner_radius [" + cut.corner_radius + "] is too large for point " + JSON.stringify(pt);
@@ -286,7 +287,7 @@
                   " F" + workspace.feed_rate);
               gcode.push("G1 X" + toX + " Y" + toY + " F" + workspace.feed_rate);
 
-            } else if (cut.corner_radius > 0) {
+            } else if (cut.corner_radius > r) {
               // TODO: arc interpolations over 120˚ are not recommended. split this arc.
               gcode.push("G2" +
                   " X" + (pt[0] + r * Math.cos(a2) - coff * Math.sin(a2)) +
