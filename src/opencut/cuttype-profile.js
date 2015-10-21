@@ -154,6 +154,12 @@
       throw "a path must have at least 2 points";
     }
 
+    if (cut.corner_radius === undefined) {
+      cut.corner_radius = 0;
+    } else if (cut.corner_radius < 0) {
+      throw "corner_radius must be >= 0";
+    }
+
     // Remove all repeated points (0 length segments)
     var prev = cut.points[0];
     var trimmedPoints = [prev];
@@ -197,15 +203,14 @@
       var needStartPositioning = (k == 0 || !joinEnds);
 
       // Start running around the points.
-      var pt = cut.points[0];
       for (var j = 0; j < cut.points.length; j++) {
-        prev = pt;
-        pt = cut.points[j];
+        var pt = cut.points[j];
+        var prev = cut.points[Math.max(0, j - 1)];
         var next = cut.points[Math.min(j + 1, cut.points.length - 1)];
         if (joinEnds) {
-          if (j === 0) {
+          if (j == 0) {
             prev = cut.points[cut.points.length - 2];
-          } else if (j + 1 == cut.points.length) {
+          } else if (j == cut.points.length -1) {
             next = cut.points[1];
           }
         }
@@ -213,24 +218,33 @@
         // Math.atan2 gives the angle of a point from (-PI, PI]
         var a1 = Math.atan2(pt[0] - prev[0], pt[1] - prev[1]);
         var a2 = Math.atan2(next[0] - pt[0], next[1] - pt[1]);
-
-        // Determine the angle of the corner, null if there is no corner.
-        var cornerAngle = 0;
-        if (!(prev[0] == pt[0] && prev[1] == pt[1]) &&
-            !(pt[0] == next[0] && pt[1] == next[1])) {
-          cornerAngle = a2 - a1;
+        if (prev[0] == pt[0] && prev[1] == pt[1]) {
+          a1 = a2;
+        } else if (pt[0] == next[0] && pt[1] == next[1]) {
+          a2 = a1;
         }
-        if (cornerAngle < -Math.PI) {
+        var cornerAngle = a2 - a1;
+        if (cornerAngle <= -Math.PI) {
           cornerAngle += 2 * Math.PI;
         } else if (cornerAngle > Math.PI) {
           cornerAngle -= 2 * Math.PI;
         }
 
-        // Convenience variable for the bit radius. We negate it for inside cuts.
+        // Convenience variable for the bit radius.
         var r = workspace.bit_diameter / 2;
-        var toX = pt[0] + r * Math.cos(j == 0 ? a2 : a1);
-        var toY = pt[1] - r * Math.sin(j == 0 ? a2 : a1);
-        if (cornerAngle > 0) {
+        var cr = (!joinEnds && (j == 0 || j == cut.points.length - 1)) ? 0
+            : Math.max((cornerAngle > 0) ? r: 0, cut.corner_radius);
+        var coff = -cr * Math.tan(Math.abs(cornerAngle) / 2);
+        if (coff * coff > Math.pow(pt[0] - prev[0], 2) + Math.pow(pt[1] - prev[1], 2)) {
+          throw "corner_radius [" + cut.corner_radius + "] is too large for point " + JSON.stringify(pt);
+        }
+        var toX = pt[0] + r * Math.cos(a1) + coff * Math.sin(a1);
+        var toY = pt[1] - r * Math.sin(a1) + coff * Math.cos(a1);
+        if (needStartPositioning) {
+          toX = pt[0] + r * Math.cos(a2) - coff * Math.sin(a2);
+          toY = pt[1] - r * Math.sin(a2) - coff * Math.cos(a2);
+        }
+        if (cornerAngle > 0 && (cut.corner_radius <= 0 || cut.corner_compensation)) {
           // TODO: There is some evidence that cornerAngle is really
           // (90 - alpha / 2) where alpha is the angle between 3 points.
           // The distance calculation should really be sin().
@@ -249,20 +263,20 @@
           gcode.push("G1 X" + toX + " Y" + toY + " F" + workspace.feed_rate);
         }
 
-        // When we are on the outside of an angle, we need to arc around the
-        // corner to keep it sharp without going out of our way.
-        if (!(pt[0] == next[0] && pt[1] == next[1]) && j > 0) {
+        // When we are on the outside of an angle, we MUST arc around the
+        // corner to keep it sharp without going out of our way. When we are
+        // on the inside, we MAY need to apply corner compensation. In either
+        // case we also MAY need arc to apply a corner_radius.
+        if (j > 0) {
           if (cornerAngle < 0) {
             // TODO: arc interpolations over 120˚ are not recommended. split this arc.
             gcode.push("G3" +
-                " X" + (pt[0] + r * Math.cos(a2)) +
-                " Y" + (pt[1] - r * Math.sin(a2)) +
-                " I" + (-r * Math.cos(a1)) +
-                " J" + (r * Math.sin(a1)) +
+                " X" + (pt[0] + r * Math.cos(a2) - coff * Math.sin(a2)) +
+                " Y" + (pt[1] - r * Math.sin(a2) - coff * Math.cos(a2)) +
+                " I" + (-(r + cr) * Math.cos(a1)) +
+                " J" + ((r + cr) * Math.sin(a1)) +
                 " F" + workspace.feed_rate)
 
-          // When we are on the inside of an angle, we need to conditionally
-          // apply corner compensation.
           } else if (cornerAngle > 0) {
             // Cut to the corner if compensation is enabled.
             if (cut.corner_compensation === true) {
@@ -272,6 +286,15 @@
               gcode.push("G1 X" + (pt[0] - (dx * mag)) + " Y" + (pt[1] - (dy * mag)) +
                   " F" + workspace.feed_rate);
               gcode.push("G1 X" + toX + " Y" + toY + " F" + workspace.feed_rate);
+
+            } else if (cut.corner_radius > r) {
+              // TODO: arc interpolations over 120˚ are not recommended. split this arc.
+              gcode.push("G2" +
+                  " X" + (pt[0] + r * Math.cos(a2) - coff * Math.sin(a2)) +
+                  " Y" + (pt[1] - r * Math.sin(a2) - coff * Math.cos(a2)) +
+                  " I" + ((cr - r) * Math.cos(a1)) +
+                  " J" + (-(cr - r) * Math.sin(a1)) +
+                  " F" + workspace.feed_rate)
             }
           }
         }
