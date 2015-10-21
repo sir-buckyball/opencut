@@ -124,8 +124,19 @@ cuts:
           <strong>Cut[profile]</strong>
           <ul>
             <li><strong>side</strong> <em>{enum}</em> - Which side of the shape to cut ["inside", "outside"]</li>
-            <li><strong>corner_compensation</strong> <em>{bool}</em> - True to cut all the way to the corner, compensating for bit size</li>
-            <li><strong>shape</strong> <em>{Shape}</em> - The shape to cut</li>
+            <li><strong>shape</strong> <em>{Shape}</em>
+              - The shape to cut
+              <br><em>NOTE: mutually exclusive with 'points'</em>
+            </li>
+            <li><strong>points</strong> <em>{array&lt;array&lt;number&gt;&gt;}</em>
+              - A series of points to cut along
+              <br><em>NOTE: mutually exclusive with 'shape'</em>
+            </li>
+            <li><strong>corner_radius</strong> <em>{number, optional}</em> - Apply a circular arc to the corner interiors</li>
+            <li><strong>corner_compensation</strong> <em>{bool, optional}</em>
+              - True to cut all the way to the corner, compensating for bit size
+              <br><em>NOTE: overrides 'corner_radius'</em>
+            </li>
           </ul>
         </div>
         <pre class="example">
