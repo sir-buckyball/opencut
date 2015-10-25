@@ -1,6 +1,6 @@
 {
   "name": "opencut editor",
-  "version": "2015.10.17.1",
+  "version": "2015.10.25.1",
   "manifest_version": 2,
   "description": "A declarative CAM program for generating gcode.",
   "icons": {

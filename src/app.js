@@ -1,6 +1,6 @@
 var app = angular.module('opencutApp', ['ui.codemirror', 'cfp.hotkeys']);
 app.controller('Ctrl', function ($rootScope, $scope, $window, $timeout, hotkeys) {
-  var renderer = new opencutPaper('preview-area');
+  var renderer = newGcodeRenderer(document.getElementById('preview-area'));
 
   $scope.showSettings = false;
   $scope.showYamlEditor = true;
@@ -38,7 +38,6 @@ app.controller('Ctrl', function ($rootScope, $scope, $window, $timeout, hotkeys)
   $scope.$watch('job', function(newValue, oldValue) {
     $rootScope.$broadcast('job', newValue);
     if (!$scope.compiledJob || !angular.equals(newValue, oldValue)) {
-      renderer.renderJob(newValue);
       if (newValue) {
         $scope.compiledJob = $window.opencut.toGCode(
           JSON.parse(JSON.stringify(newValue)));
@@ -47,6 +46,10 @@ app.controller('Ctrl', function ($rootScope, $scope, $window, $timeout, hotkeys)
         $scope.compiledJob = {};
         $scope.gcode = [];
       }
+      var bitDiameter = newValue.bit_diameter * ((newValue.units == "inch") ? 25.4 : 1);
+      renderer.renderGcode($scope.gcode.join("\n"), {
+            'bit_diameter': bitDiameter,
+          });
     }
   });
 
@@ -73,10 +76,14 @@ app.controller('Ctrl', function ($rootScope, $scope, $window, $timeout, hotkeys)
   $scope.$on('updatedJob', function(evt, job) {
     $scope.jobYaml = YAML.stringify(job, 4, 2);
     $scope.job = job;
-    renderer.renderJob(job);
     $scope.compiledJob = $window.opencut.toGCode(
       JSON.parse(JSON.stringify(job)));
     $scope.gcode = $scope.compiledJob.gcode;
+
+    var bitDiameter = job.bit_diameter * ((job.units == "inch") ? 25.4 : 1);
+    renderer.renderGcode($scope.gcode.join("\n"), {
+      'bit_diameter': bitDiameter,
+    });
   });
 
   $scope.yamlFile = null;

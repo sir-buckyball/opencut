@@ -1,29 +1,8 @@
-/*global paper*/
-
-function resizeView() {
-  var minX = -0.01;
-  var minY = -0.01;
-  var maxX = 0.01;
-  var maxY = 0.01;
-  var allItems = paper.project.getItems();
-  for (var k = 0; k < allItems.length; k++) {
-    var bounds = allItems[k].getBounds();
-    minX = Math.min(minX, bounds.x);
-    minY = Math.min(minY, bounds.y);
-    maxX = Math.max(maxX, bounds.x + bounds.width);
-    maxY = Math.max(maxY, bounds.y + bounds.height);
-  }
-  paper.view.setCenter(new paper.Point(
-    minX + (maxX - minX) / 2, minY + (maxY - minY) / 2));
-
-  var scaleX = (paper.view.getBounds().width / ((maxX - minX) * 1.1)) * paper.view.getZoom();
-  var scaleY = (paper.view.getBounds().height / ((maxY - minY) * 1.1)) * paper.view.getZoom();
-  paper.view.setZoom(Math.min(scaleX, scaleY));
-}
+/* global opencut:false */
+/* global newGcodeRenderer:false */
 
 function renderYaml(txt) {
   console.time("render YAML");
-  paper.project.clear();
 
   // parse the YAML.
   var job = function(t) {
@@ -38,83 +17,21 @@ function renderYaml(txt) {
     return window.YAML.parse(contentLines.join("\n"));
   }(txt);
 
-  // Render the shapes which the cuts will be centered around.
-  var cutShapes = new paper.Group();
-  if (job.cuts != null) {
-    for (var i = 0; i < job.cuts.length; i++) {
-      var cut = job.cuts[i];
-      if (cut.points && cut.points.length > 0) {
-        if (cut.type == "drill") {
-          for (var k = 0; k < cut.points.length; k++) {
-            var drillSpot = new paper.Shape.Circle(
-              new paper.Point(cut.points[k]), job.bit_diameter / 2);
-            drillSpot.strokeColor = "black";
-            drillSpot.fillColor = "grey";
-            cutShapes.addChild(drillSpot);
-          }
-        } else if (cut.type == "screwhole") {
-          for (var k = 0; k < cut.points.length; k++) {
-            var screwSpot = new paper.Shape.Circle(
-              new paper.Point(cut.points[k]), cut.shaft_diameter / 2);
-            screwSpot.strokeColor = "black";
-            screwSpot.fillColor = "grey";
-            if (cut.cap_diameter > 0) {
-              var capSpot = new paper.Shape.Circle(
-                new paper.Point(cut.points[k]), cut.cap_diameter / 2);
-              capSpot.strokeColor = "black";
-              screwSpot.strokeColor = "grey";
-              capSpot.fillColor = "lightgrey";
-              cutShapes.addChild(capSpot);
-            }
-            cutShapes.addChild(screwSpot);
-          }
-        } else {
-          var path = new paper.Path();
-          path.moveTo(new paper.Point(cut.points[0]));
-          for (var j = 1; j < cut.points.length; j++) {
-            path.lineTo(new paper.Point(cut.points[j]));
-          }
-          path.strokeColor = "black"
-          cutShapes.addChild(path);
-        }
-      }
-
-      if (cut.shape) {
-        if (cut.shape.type == "circle") {
-          var shapeCircle = new paper.Shape.Circle(
-            new paper.Point(cut.shape.center), cut.shape.radius);
-          shapeCircle.strokeColor = "black";
-          cutShapes.addChild(shapeCircle);
-        } else if (cut.shape.type == "rectangle") {
-          var shapeRect = new paper.Shape.Rectangle(
-            new paper.Point(cut.shape.origin), new paper.Size(cut.shape.size));
-          shapeRect.strokeColor = "black";
-          cutShapes.addChild(shapeRect);
-        } else {
-          console.log("unknown shape: " + cut.shape.type);
-        }
-      }
-    }
+  // TODO: display errors.
+  var processedJob = opencut.toGCode(job);
+  for (var i = 0; i < processedJob.errors.length; i++) {
+    console.error(processedJob.errors[i]);
   }
-
-  // Invert everything (to move the origin to the bottom left).
-  cutShapes.scale(1, -1);
-
-  resizeView();
-
-  // The view must be resized before setting the stroke width
-  // so we know how wide to stroke.
-  cutShapes.style.strokeWidth = 1 / paper.view.getZoom();
-
-  paper.view.draw();
+  for (var i = 0; i < processedJob.warnings.length; i++) {
+    console.warn(processedJob.warnings[i]);
+  }
+  var bitDiameter = job.bit_diameter * ((job.units == "inch") ? 25.4 : 1);
+  newGcodeRenderer(document.getElementById('myCanvas'))
+      .renderGcode(processedJob.gcode.join("\n"), {
+        'bit_diameter': bitDiameter,
+      });
   console.timeEnd("render YAML");
 }
-
-
-function renderGcode(txt) {
-  console.log("TODO: implement support for gcode");
-}
-
 
 function handleFile(file) {
   console.log("processing file: " + file.name);
@@ -128,7 +45,7 @@ function handleFile(file) {
       if (file.name.indexOf(".yaml") != -1) {
         renderYaml(evt.target.result);
       } else if (file.name.indexOf(".gcode") != -1 || file.name.indexOf(".nc") != -1) {
-        renderGcode(evt.target.result);
+        window.gcodeRenderer.renderGcode(evt.target.result);
       } else {
         console.log("unknown file type");
       }
@@ -136,7 +53,6 @@ function handleFile(file) {
   };
   reader.readAsText(file);
 }
-
 
 function setupDragDrop() {
   var dropZone = $("body")[0];
@@ -166,16 +82,15 @@ function setupDragDrop() {
 $(document).ready(function() {
   setupDragDrop();
 
-	paper.setup(document.getElementById('myCanvas'));
-
   // Listen for updates from our main page.
   window.addEventListener("message", function(event) {
     console.log("got a message from the heavens:\n" + event.data);
     renderYaml(event.data);
   }, false);
 
-  // Update the viewport on resize.
+  // Create a renderer.
+  window.gcodeRenderer = newGcodeRenderer(document.getElementById('myCanvas'));
   $(window).resize(function() {
-    resizeView();
+    window.gcodeRenderer.resizeView();
   });
 });
