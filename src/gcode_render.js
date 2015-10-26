@@ -55,7 +55,7 @@ function newGcodeRenderer(canvas) {
    */
   var renderGcode = function(gcode, opt_options) {
     var options = opt_options || {};
-    var bitRadius = options["bit_diameter"] / 2 || 0.5;
+    var bitRadius = options["bit_diameter"] / 2 || (1 / paper.view.getZoom());
 
     console.time("renderGcode");
     
@@ -90,27 +90,29 @@ function newGcodeRenderer(canvas) {
       allPaths.addChild(new paper.Path.Line({
         "from": [ix, 0],
         "to": [ix, workspaceDepth],
-        "strokeColor": "#DCFFFF"
+        "strokeColor": "#DCFFFF",
+        "strokeWidth": (ix % 50 == 0) ? 1.5 : 1,
       }));
     }
     for (var iy = 10; iy <= workspaceDepth; iy += 10) {
       allPaths.addChild(new paper.Path.Line({
         "from": [0, iy],
         "to": [workspaceWidth, iy],
-        "strokeColor": "#DCFFFF"
+        "strokeColor": "#DCFFFF",
+        "strokeWidth": (iy % 50 == 0) ? 1.5 : 1,
       }));
     }
     allPaths.addChild(new paper.Path.Line({
       "from": [0, 0],
       "to": [workspaceWidth, 0],
       "strokeColor": "#A3CCCC",
-      "strokeWidth": 2
+      "strokeWidth": 2,
     }));
     allPaths.addChild(new paper.Path.Line({
       "from": [0, 0],
       "to": [0, workspaceDepth],
       "strokeColor": "#A3CCCC",
-      "strokeWidth": 2
+      "strokeWidth": 2,
     }));
 
     var depthColor = function(depth1, depth2) {
