@@ -55,17 +55,26 @@ function newGcodeRenderer(canvas) {
    */
   var renderGcode = function(gcode, opt_options) {
     var options = opt_options || {};
-    var bitRadius = options["bit_diameter"] / 2 || 0.5;
 
     console.time("renderGcode");
     
     var commandSequence = extractCommandSequence(gcode);
-    
+
     // Run an analysis on the gcode to determine the appropriate bounds for rendering.
     var analysis = analyzeGcode(commandSequence);
+    var workspaceWidth = Math.max(analysis.maxPos.X - analysis.minPos.X, 50);
+    var workspaceDepth = Math.max(analysis.maxPos.Y - analysis.minPos.Y, 50);
 
     // Clear out any previous paths.
     paper.project.clear();
+
+    // Set an appropriate zoom/centering given our analysis.
+    paper.view.setZoom(Math.min(
+      paper.view.viewSize.width / (workspaceWidth * 1.1),
+      paper.view.viewSize.height / (workspaceDepth * 1.1)));
+    paper.view.setCenter(new paper.Point(
+      analysis.minPos.X + workspaceWidth / 2,
+      analysis.minPos.Y + workspaceDepth / 2));
 
     // A scaling factor from current units to mm.
     var scale = 1;
@@ -84,33 +93,36 @@ function newGcodeRenderer(canvas) {
     var allPaths = new paper.Group();
 
     // Draw a little graph table representing out workspace.
-    var workspaceWidth = 10 * Math.ceil(Math.max(50, analysis.maxPos.X) / 10);
-    var workspaceDepth = 10 * Math.ceil(Math.max(50, analysis.maxPos.Y) / 10);
-    for (var ix = 10; ix <= workspaceWidth; ix += 10) {
+    var gridLineWidth = 1 / paper.view.getZoom();
+    var gridWidth = 10 * Math.ceil(Math.max(50, analysis.maxPos.X) / 10);
+    var gridDepth = 10 * Math.ceil(Math.max(50, analysis.maxPos.Y) / 10);
+    for (var ix = 10; ix <= gridWidth; ix += 10) {
       allPaths.addChild(new paper.Path.Line({
         "from": [ix, 0],
-        "to": [ix, workspaceDepth],
-        "strokeColor": "#DCFFFF"
+        "to": [ix, gridDepth],
+        "strokeColor": "#DCFFFF",
+        "strokeWidth": gridLineWidth * (ix % 50 == 0) ? 1.5 : 1,
       }));
     }
-    for (var iy = 10; iy <= workspaceDepth; iy += 10) {
+    for (var iy = 10; iy <= gridDepth; iy += 10) {
       allPaths.addChild(new paper.Path.Line({
         "from": [0, iy],
-        "to": [workspaceWidth, iy],
-        "strokeColor": "#DCFFFF"
+        "to": [gridWidth, iy],
+        "strokeColor": "#DCFFFF",
+        "strokeWidth": gridLineWidth * (iy % 50 == 0) ? 1.5 : 1,
       }));
     }
     allPaths.addChild(new paper.Path.Line({
       "from": [0, 0],
-      "to": [workspaceWidth, 0],
+      "to": [gridWidth, 0],
       "strokeColor": "#A3CCCC",
-      "strokeWidth": 2
+      "strokeWidth": 2 * gridLineWidth,
     }));
     allPaths.addChild(new paper.Path.Line({
       "from": [0, 0],
-      "to": [0, workspaceDepth],
+      "to": [0, gridDepth],
       "strokeColor": "#A3CCCC",
-      "strokeWidth": 2
+      "strokeWidth": 2 * gridLineWidth,
     }));
 
     var depthColor = function(depth1, depth2) {
@@ -119,12 +131,12 @@ function newGcodeRenderer(canvas) {
         return "green";
       }
 
-      var c = Math.round(255 - (depth / analysis.minPos.Z) * 255);
+      var c = Math.round(255 - (depth / analysis.minPos.Z) * 224);
       return "rgb(" + c + "," + c + "," + c + ")";
     };
 
     console.time("renderGcode: gcode processing");
-    var path = null;
+    var bitRadius = options["bit_diameter"] / 2 || (1 / paper.view.getZoom());
     var prevInstruction = "";
     for (var i = 0; i < commandSequence.length; i++) {
       var command = prevInstruction + commandSequence[i];
@@ -141,8 +153,6 @@ function newGcodeRenderer(canvas) {
       for (var j = 1; j < parts.length; j++) {
         params[parts[j][0].toUpperCase()] = parseFloat(parts[j].substr(1)) || 0;
       }
-
-      path = null;
 
       if (cType == "G" && (cNum === 0 || cNum === 1)) {
         var endX = ((isRelative || params.X === undefined) ? pos.X : 0) +
@@ -178,11 +188,6 @@ function newGcodeRenderer(canvas) {
         pos.X = endX;
         pos.Y = endY;
         pos.Z = endZ;
-
-        // Don't join rapid move segments since they have a different style than other lines.
-        if (cNum === 0) {
-          path = null;
-        }
       } else if (cType == "G" && (cNum === 2 || cNum === 3)) {
         if (params.I === undefined || params.J === undefined) {
           warn("implementation only supports specification of both I and J: " + command);
@@ -310,19 +315,13 @@ function newGcodeRenderer(canvas) {
     // Invert everything (to move the origin to the bottom left).
     allPaths.scale(1, -1);
 
-    // The view must be resized before setting the stroke width
-    // so we know how wide to stroke.
-    resizeView();
-
     paper.view.draw();
     console.timeEnd("renderGcode");
   };
 
 
   // Initialize paper.js
-  console.time("setup paper new");
   paper.setup(canvas);
-  console.timeEnd("setup paper new");
 
   // Render an empty workspace.
   renderGcode([]);
