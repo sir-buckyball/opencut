@@ -131,7 +131,7 @@ function newGcodeRenderer(canvas) {
         return "green";
       }
 
-      var c = Math.round(255 - (depth / analysis.minPos.Z) * 255);
+      var c = Math.round(255 - (depth / analysis.minPos.Z) * 224);
       return "rgb(" + c + "," + c + "," + c + ")";
     };
 
