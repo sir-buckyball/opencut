@@ -321,9 +321,7 @@ function newGcodeRenderer(canvas) {
 
 
   // Initialize paper.js
-  console.time("setup paper new");
   paper.setup(canvas);
-  console.timeEnd("setup paper new");
 
   // Render an empty workspace.
   renderGcode([]);
