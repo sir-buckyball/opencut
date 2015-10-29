@@ -1,0 +1,15 @@
+units: mm
+bit_diameter: 3.175
+feed_rate: 254
+plunge_rate: 127
+safety_height: 5
+z_step_size: 1.5875
+default_depth: -3.175
+cuts:
+  -
+    type: screwhole
+    shaft_diameter: 3.175
+    points: [[7.5, 37.5], [7.5, 22.5], [7.5, 7.5], [22.5, 7.5], [37.5, 7.5]]
+  -
+    type: path
+    points: [[0, 0], [45, 0], [45, 15], [15, 15], [15, 45], [0, 45], [0, 0]]
