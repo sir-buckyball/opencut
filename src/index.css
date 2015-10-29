@@ -12,6 +12,8 @@ nav {
   color: rgba(0,0,0,0.87);
   background: #4CAF50;
   width: 200px;
+  display: flex;
+  flex-direction: column;
 }
 nav>h1 {
   padding: 0;
@@ -39,7 +41,7 @@ nav>a {
   display: block;
 }
 #navspacer {
-  height: 5em;
+  flex-grow: 1;
 }
 
 main {
