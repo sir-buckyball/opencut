@@ -124,10 +124,10 @@ window.opencut = function() {
     // Build up a workspace description.
     var workspace = {gcodeForCut: gcodeForCut};
     workspace.units = "mm";
-    if (job.units == "inch") {
-      workspace.units = "inch";
-    } else if (job.units != "mm") {
+    if (job.units === undefined || (job.units != "mm" && job.units != "inch")) {
       warnings.push("'units' is requried to be set to ['mm', 'inch']. assuming 'mm'");
+    } else if (job.units == "inch") {
+      workspace.units = "inch";
     }
     workspace.feed_rate = (workspace.units == "mm") ? 100 : 4;
     if (job.feed_rate) {
