@@ -12,26 +12,23 @@
  * @param canvas {Element} - The canvas element to use.
  */
 function newGcodeRenderer(canvas) {
+  var analysis = {
+    minPos: {X: 0, Y: 0},
+    maxPos: {X: 0, Y: 0},
+  };
+
   /* Resize the paperjs view to fit everything rendered. */
   var resizeView = function() {
-    var minX = -0.01;
-    var minY = -0.01;
-    var maxX = 0.01;
-    var maxY = 0.01;
-    var allItems = paper.project.getItems();
-    for (var k = 0; k < allItems.length; k++) {
-      var bounds = allItems[k].getBounds();
-      minX = Math.min(minX, bounds.x);
-      minY = Math.min(minY, bounds.y);
-      maxX = Math.max(maxX, bounds.x + bounds.width);
-      maxY = Math.max(maxY, bounds.y + bounds.height);
-    }
-    paper.view.setCenter(new paper.Point(
-      minX + (maxX - minX) / 2, minY + (maxY - minY) / 2));
+    var workspaceWidth = Math.max(analysis.maxPos.X - analysis.minPos.X, 50);
+    var workspaceDepth = Math.max(analysis.maxPos.Y - analysis.minPos.Y, 50);
 
-    var scaleX = (paper.view.viewSize.width / ((maxX - minX) * 1.1));
-    var scaleY = (paper.view.viewSize.height / ((maxY - minY) * 1.1));
-    paper.view.setZoom(Math.min(scaleX, scaleY));
+    // Set an appropriate zoom/centering given our analysis.
+    paper.view.setZoom(Math.min(
+      paper.view.viewSize.width / (workspaceWidth * 1.1),
+      paper.view.viewSize.height / (workspaceDepth * 1.1)));
+    paper.view.setCenter(new paper.Point(
+      analysis.minPos.X + workspaceWidth / 2,
+      analysis.minPos.Y + workspaceDepth / 2));
   };
 
   /* Set the size of the paper canvas. */
@@ -61,20 +58,11 @@ function newGcodeRenderer(canvas) {
     var commandSequence = extractCommandSequence(gcode);
 
     // Run an analysis on the gcode to determine the appropriate bounds for rendering.
-    var analysis = analyzeGcode(commandSequence);
-    var workspaceWidth = Math.max(analysis.maxPos.X - analysis.minPos.X, 50);
-    var workspaceDepth = Math.max(analysis.maxPos.Y - analysis.minPos.Y, 50);
+    analysis = analyzeGcode(commandSequence);
+    resizeView();
 
     // Clear out any previous paths.
     paper.project.clear();
-
-    // Set an appropriate zoom/centering given our analysis.
-    paper.view.setZoom(Math.min(
-      paper.view.viewSize.width / (workspaceWidth * 1.1),
-      paper.view.viewSize.height / (workspaceDepth * 1.1)));
-    paper.view.setCenter(new paper.Point(
-      analysis.minPos.X + workspaceWidth / 2,
-      analysis.minPos.Y + workspaceDepth / 2));
 
     // A scaling factor from current units to mm.
     var scale = 1;
