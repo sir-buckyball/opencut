@@ -42,4 +42,4 @@ to the Javascript library. It is also possible to load in additional cut types.
 
 ## Documentation
 
-    TODO: copy documentation here
+https://github.com/sir-buckyball/opencut/wiki/YAML-documentation
