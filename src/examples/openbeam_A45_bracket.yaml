@@ -1,0 +1,37 @@
+name: openbeam_A45_bracket
+units: mm
+bit_diameter: 3.175
+feed_rate: 400
+plunge_rate: 200
+safety_height: 1
+z_step_size: 1
+default_depth: -3.175
+cuts:
+  -
+    type: screwhole
+    shaft_diameter: 3.175
+    cap_diameter: 6
+    cap_depth: -0.5
+    points: 
+      - [21.2797,   37.5156]
+      - [39.7993,   37.5156]
+      - [45.5395,   23.6574]
+      - [30.5395,   23.6574]
+      - [15.5395,   23.6574]
+      - [ 9.7993,    9.7992]
+      - [51.2798,    9.7992]
+  -
+    type: profile
+    side: outside
+    corner_radius: 3
+    corner_compensation: true
+    points: 
+      - [ 0.00000,    5.74020]
+      - [17.22080,   47.31480]
+      - [43.85850,   47.31440]
+      - [61.07900,    5.74020]
+      - [47.22080,    0.00000]
+      - [41.48050,   13.85840]
+      - [19.59850,   13.85840]
+      - [13.85820,    0.00000]
+      - [ 0.00000,    5.74020]

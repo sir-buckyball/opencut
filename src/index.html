@@ -1,11 +1,24 @@
 <!doctype html>
-<html>
+<html ng-app="app" ng-app ng-csp>
   <head>
-    <title>openCut</title>
+    <title>openCut: declarative CAM</title>
     <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8" />
+    <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width">
+    <link rel="stylesheet" href="deps/angular-csp.css">
+    <link rel="stylesheet" href="deps/codemirror-4.6/codemirror.css">
+    <link rel="stylesheet" href="deps/hotkeys.min.css">
     <link rel="stylesheet" href="index.css">
-    <script type="text/javascript" src="index-deps.js"></script>
+    <script type="text/javascript" src="deps/jquery-2.1.4.min.js"></script>
+    <script type="text/javascript" src="deps/angular.min.js"></script>
+    <script type="text/javascript" src="deps/codemirror-4.6/codemirror.js"></script>
+    <script type="text/javascript" src="deps/codemirror-4.6/mode/yaml/yaml.js"></script>
+    <script type="text/javascript" src="deps/paper-core.min.js"></script>
+    <script type="text/javascript" src="deps/ui-codemirror.js"></script>
+    <script type="text/javascript" src="deps/yaml.min.js"></script>
+    <script type="text/javascript" src="deps/hotkeys.min.js"></script>
+    <script type="text/javascript" src="deps/FileSaver.min.js"></script>
     <script type="text/javascript" src="opencut/opencut.js"></script>
     <script type="text/javascript" src="opencut/cuttype-drill.js"></script>
     <script type="text/javascript" src="opencut/cuttype-gcode.js"></script>
@@ -13,35 +26,40 @@
     <script type="text/javascript" src="opencut/cuttype-pocket.js"></script>
     <script type="text/javascript" src="opencut/cuttype-profile.js"></script>
     <script type="text/javascript" src="opencut/cuttype-screwhole.js"></script>
+    <script type="text/javascript" src="gcode_util.js"></script>
+    <script type="text/javascript" src="gcode_render.js"></script>
     <script type="text/javascript" src="index.js"></script>
   </head>
-  <body>
+  <body ng-controller="Ctrl">
     <nav id="top-nav">
       <h1>opencut</h1>
-      <a href="about.html" target="">about</a>
-      <a href="docs.html" target="">docs</a>
-    </nav>
 
-    <div id="controls">
       <!-- this input is needed to let a user select a file, but it is ugly so we hide it. -->
       <input type="file" id="input-file-local" style="display:none">
-      <button id="btn-open-file">open file</button>
-      <button id="btn-save-file">save file</button>
-      <button id="btn-compile-gcode">compile gcode</button>
-      <button id="btn-preview">preview</button>
+      <button ng-click="openFile()">open file</button>
+      <button ng-click="saveFile()">save file</button>
+      <button ng-click="exportGcode()">export gcode</button>
+
+      <div id="navspacer"></div>
+
       <a id="link-download-gcode" style="display:none">download gcode</a>
-    </div>
+      <a href="https://github.com/sir-buckyball/opencut/wiki/YAML-documentation" target="_blank">documentation</a>
+    </nav>
 
-    <div id="user-warnings"></div>
+    <main>
+      <article>
+        <div class="user-error" ng-repeat="e in errors">{{e}}</div>
+        <div class="user-warning" ng-repeat="w in warnings">{{w}}</div>
 
-    <div class="container">
-      <div class="row">
-        <div class="col-md-8">
-          <div id="editor-holder">
-            <div id="yaml-editor"></div>
-          </div>
-        </div>
-      </div>
-    </div>
+        <ui-codemirror id="yaml-editor"
+          ng-model="jobYaml"
+          ng-model-options="{debounce: 500}"
+          ui-codemirror-opts="yamlEditorOptions"></ui-codemirror>
+      </article>      
+
+      <aside>
+      	<canvas id="preview"></canvas>
+      </aside>
+    </main>
   </body>
 </html>

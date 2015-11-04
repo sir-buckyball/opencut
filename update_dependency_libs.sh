@@ -26,19 +26,6 @@ ensure deps/FileSaver.js https://raw2.github.com/eligrey/FileSaver.js/master/Fil
 ensure src/qunit-1.14.0.js http://code.jquery.com/qunit/qunit-1.14.0.js
 ensure src/qunit-1.14.0.css http://code.jquery.com/qunit/qunit-1.14.0.css
 
-# Dump the js file contents into our dep file.
-# TODO: we should probably version the deps file.
-echo "building src/index-deps.js"
-(
-  set -x
-  cat deps/jquery.min.js > src/index-deps.js
-  cat deps/ace.js >> src/index-deps.js
-  cat deps/mode-yaml.js >> src/index-deps.js
-  cat deps/yaml.min.js >> src/index-deps.js
-  cat deps/FileSaver.js >> src/index-deps.js
-)
-
-
 # Unpack dependencies for the rendering code.
 ensure deps/paperjs-v0.9.18.zip http://paperjs.org/download/paperjs-v0.9.18.zip
 mkdir -p deps/paperjs

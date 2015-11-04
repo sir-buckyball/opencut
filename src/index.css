@@ -1,36 +1,70 @@
 body {
-  color: #44502F;
+  color: #000;
+  color: rgba(0,0,0,0.87);
   font-family: sans-serif;
   margin: 0;
   padding: 0;
+  display: flex;
 }
 
 nav {
-  color: #0D3914;
-  background: #A0B57D;
-  border-bottom: 2px solid #556B2F;
-  height: 24px;
-  text-align: right;
-  padding: 0.5em
+  color: #000;
+  color: rgba(0,0,0,0.87);
+  background: #4CAF50;
+  width: 200px;
+  display: flex;
+  flex-direction: column;
 }
-h1 {
-  float: left;
-  font-size: 24px;
+nav>h1 {
   padding: 0;
-  margin: 0;
+  margin: 0 2px 10px 2px;
+  border-bottom: 1px solid #000;
+  border-bottom: 1px solid rgba(0,0,0,0.87);
 }
-nav a {
-  color: #0D3914;
-  padding-left: 1em;
-  vertical-align: middle;
+nav>button {
+  display: block;
+  margin: 1em auto;
+  padding: 0.5em;
+  width: 90%;
+  text-transform: uppercase;
+  background: #FFF;
+  background: rgba(255,255,255,0.87);
+  border-radius: 2px;
+  border: 0;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.87);
 }
+nav>a {
+  margin: 0.5em 0;
+  color: #000;
+  color: rgba(0,0,0,0.87);
+  text-align: center;
+  display: block;
+}
+#navspacer {
+  flex-grow: 1;
+}
+
+main {
+  display: flex;
+  width: 100%;
+}
+
+article {
+  flex: 1;
+  flex-grow: 1;
+}
+
+aside {
+  width: 320px;
+}
+#preview {
+  width: 320px;
+  height: 280px;
+}
+
 
 #output-gcode {
   overflow: auto;
-}
-
-#controls {
-  background: #CCC;
 }
 
 .warning {
@@ -40,4 +74,26 @@ nav a {
   border-radius: 2px;
   margin: 0.25em;
   padding: 0.25em;
+}
+
+.CodeMirror {
+  height: auto;
+}
+
+.user-warning {
+  background: #FFEB3B;
+  font-weight: bold;
+  color: black;
+  color: rgba(0, 0, 0, 0.87);
+  margin: 2px;
+  border-radius: 3px;
+}
+
+.user-error {
+  background: #F44336;
+  font-weight: bold;
+  color: white;
+  color: rgba(255, 255, 255, 0.87);
+  margin: 2px;
+  border-radius: 3px;
 }
