@@ -1,0 +1,373 @@
+<!doctype html>
+<html ng-app="app" ng-app ng-csp>
+  <head>
+    <title>extrusion bracket generator</title>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width">
+    <link rel="stylesheet" href="../deps/angular-csp.css">
+    <link rel="stylesheet" href="../deps/codemirror-4.6/codemirror.css">
+    <link rel="stylesheet" href="../deps/hotkeys.min.css">
+    <link rel="stylesheet" href="../index.css">
+    <script type="text/javascript" src="../deps/jquery-2.1.4.min.js"></script>
+    <script type="text/javascript" src="../deps/angular.min.js"></script>
+    <script type="text/javascript" src="../deps/codemirror-4.6/codemirror.js"></script>
+    <script type="text/javascript" src="../deps/codemirror-4.6/mode/yaml/yaml.js"></script>
+    <script type="text/javascript" src="../deps/paper-core.min.js"></script>
+    <script type="text/javascript" src="../deps/ui-codemirror.js"></script>
+    <script type="text/javascript" src="../deps/yaml.min.js"></script>
+    <script type="text/javascript" src="../deps/hotkeys.min.js"></script>
+    <script type="text/javascript" src="../deps/FileSaver.min.js"></script>
+    <script type="text/javascript" src="../opencut/opencut.js"></script>
+    <script type="text/javascript" src="../opencut/cuttype-drill.js"></script>
+    <script type="text/javascript" src="../opencut/cuttype-gcode.js"></script>
+    <script type="text/javascript" src="../opencut/cuttype-path.js"></script>
+    <script type="text/javascript" src="../opencut/cuttype-pocket.js"></script>
+    <script type="text/javascript" src="../opencut/cuttype-profile.js"></script>
+    <script type="text/javascript" src="../opencut/cuttype-screwhole.js"></script>
+    <script type="text/javascript" src="../gcode_util.js"></script>
+    <script type="text/javascript" src="../gcode_render.js"></script>
+    <script>
+
+/*global angular*/
+/*global opencut*/
+/*global newGcodeRenderer*/
+
+function minPoint(pts) {
+  var m = [pts[0][0], pts[0][1]];
+  for (var i = 1; i < pts.length; i++) {
+    var pt = pts[i];
+    if (pt[0] < m[0]) {
+      m[0] = pt[0];
+    }
+    if (pt[1] < m[1]) {
+      m[1] = pt[1];
+    }
+  }
+  return m;
+}
+
+function translatePts(pts, offset) {
+  var ret = [];
+  for (var i = 0; i < pts.length; i++) {
+    var pt = pts[i];
+    ret.push([pt[0] - offset[0], pt[1] - offset[1]]);
+  }
+  return ret;
+}
+
+function rotatePoint(pt, angle, center) {
+  var c = center || [0, 0];
+  var sx = pt[0] - c[0];
+  var sy = pt[1] - c[1];
+  var x = sx * Math.cos(angle) - sy * Math.sin(angle);
+  var y = sx * Math.sin(angle) + sy * Math.cos(angle);
+  return [x + c[0], y + c[1]];
+}
+
+/**
+ * Return the bend angle between 3 points.
+ */
+function bendAngle(p1, p2, p3) {
+    var a1 = Math.atan2(p2[0] - p1[0], p2[1] - p1[1]);
+    var a2 = Math.atan2(p3[0] - p2[0], p3[1] - p2[1]);
+    var ba = a2 - a1;
+    if (ba <= -Math.PI) {
+      ba += 2 * Math.PI;
+    } else if (ba > Math.PI) {
+      ba -= 2 * Math.PI;
+    }
+  return ba;
+}
+
+/**
+ * Return the distance between 2 points.
+ */
+function dist(p1, p2) {
+  return Math.sqrt(Math.pow(p1[0] - p2[0], 2) + Math.pow(p1[1] - p2[1], 2));
+}
+
+/**
+ * Simplify a point list by removing redundant colinear points.
+ */
+function simplifyPoints(pts) {
+  // If we have a sharp angle with close side points, skip.
+  var npts = [];
+  for (var i = 0; i < pts.length; i++) {
+    var p1 = pts[(i - 1) < 0 ? pts.length - 2 : i - 1];
+    var p2 = pts[i];
+    var p3 = pts[(i + 1) >= pts.length ? 1 : i + 1];
+    
+    var ba = bendAngle(p1, p2, p3);
+    var d12 = dist(p1, p2);
+    var d23 = dist(p2, p3);
+    var d13 = dist(p1, p3) / 1.4;
+    var res = ba > 0 || Math.abs(d13) < 0.001 || (d12 < d13 && d23 < d13);
+    if (res) {
+      npts.push(p2);
+    } else {
+      console.log("dropping: " + JSON.stringify([p2], ba, d13, d12, d23));
+    }
+  }
+  if (npts[0][0] != npts[npts.length - 1][0]
+      || npts[0][1] != npts[npts.length - 1][1]) {
+    npts.push(npts[0]);
+  }
+
+  // Remove colinear points.
+  pts = npts;
+  npts = [pts[0]];
+  for (var j = 1; j < pts.length - 1; j++) {
+    if (Math.abs(bendAngle(npts[npts.length - 1], pts[j], pts[j + 1])) > 0.001) {
+      npts.push(pts[j]);
+    }
+  }
+  npts.push(pts[pts.length - 1]);
+  return npts;
+}
+
+/**
+ * Create a minimum spanning tree for a given set of points.
+ * 
+ * This function uses Prim's algorighm:
+ *  - start with a random vertex
+ *  - pick the closet unconnected vertext and connect it
+ */
+function minimumSpanningTree(pts) {
+  var remainingPts = [];
+  for (var i = 0; i < pts.length; i++) {
+    remainingPts.push({x: pts[i][0], y:pts[i][1], children: []});
+  }
+  
+  var mst = [remainingPts.shift()];
+  while (remainingPts.length > 0) {
+    var closestTree = null;
+    var closestRemaining = null;
+    var dist = null;
+    for (var k = 0; k < mst.length; k++) {
+      for (var j = 0; j < remainingPts.length; j++) {
+        var d = Math.pow(mst[k].x - remainingPts[j].x, 2) +
+            Math.pow(mst[k].y - remainingPts[j].y, 2);
+        if (closestTree == null || d < dist) {
+          closestTree = k;
+          closestRemaining = j;
+          dist = d;
+        }
+      }
+    }
+
+    // Don't push duplicate points.
+    if (d > 0) {
+      var pt = remainingPts[closestRemaining];
+      mst[closestTree].children = mst[closestTree].children.concat([pt]);
+      mst.push(pt);
+    }
+    remainingPts = remainingPts.slice(0,
+        closestRemaining).concat(remainingPts.slice(closestRemaining + 1));
+  }
+  
+  return mst[0];
+}
+
+/**
+ * Given a tree of points (eg., a minimum spanning tree), return a sequence of
+ * points walking around it.
+ */
+function walkAroundTree(root, parent) {
+  var pts = [[root.x, root.y]];
+  
+  // Sort the children so they are in a consistent order from the parent.
+  parent = parent || {x:0, y:0};
+  root.children.sort(function(c1, c2) {
+    var a1 = bendAngle([parent.x, parent.y], [root.x, root.y], [c1.x, c1.y]);
+    var a2 = bendAngle([parent.x, parent.y], [root.x, root.y], [c2.x, c2.y]);
+    return a1 - a2;
+  });
+
+  for (var i = 0; i < root.children.length; i++) {
+    pts = pts.concat(walkAroundTree(root.children[i], root));
+    pts.push([root.x, root.y]);
+  }
+  return pts;
+}
+
+/**
+ * Generate a path of points walking around the input points at the given
+ * distance.
+ * 
+ * @param pts {Array<Number>} - points to make a border around
+ * @param distance {Number} - distance to maintain from the points
+ * @param minDist {NUmber} - the minimum distance when splitting a corner
+ */
+function borderize(pts, distance, minDist) {
+  var out = [];
+  for (var j = 0; j < pts.length; j++) {
+    var pt = pts[j];
+    var prev = pts[Math.max(0, j - 1)];
+    var next = pts[Math.min(j + 1, pts.length - 1)];
+    if (j == 0) {
+      prev = pts[pts.length - 2];
+    } else if (j == pts.length -1) {
+      next = pts[1];
+    }
+
+    // Math.atan2 gives the angle of a point from (-PI, PI]
+    var a1 = Math.atan2(pt[0] - prev[0], pt[1] - prev[1]);
+    var a2 = Math.atan2(next[0] - pt[0], next[1] - pt[1]);
+    if (prev[0] == pt[0] && prev[1] == pt[1]) {
+      a1 = a2;
+    } else if (pt[0] == next[0] && pt[1] == next[1]) {
+      a2 = a1;
+    }
+    var cornerAngle = a2 - a1;
+    if (cornerAngle <= -Math.PI) {
+      cornerAngle += 2 * Math.PI;
+    } else if (cornerAngle > Math.PI) {
+      cornerAngle -= 2 * Math.PI;
+    }
+
+    // Convenience variable for the bit radius.
+    var r = distance;
+    var d = r / Math.cos(cornerAngle / 2);
+    
+    if (cornerAngle < -Math.PI / 2) {
+      out.push([
+        pt[0] - d * Math.cos(a1 + cornerAngle / 2),
+        pt[1] + d * Math.sin(a1 + cornerAngle / 2)]);
+
+    } else if (cornerAngle < 0) {
+      out.push([
+        pt[0] - d * Math.cos(a1 + cornerAngle / 2),
+        pt[1] + d * Math.sin(a1 + cornerAngle / 2)]);
+
+    } else if (cornerAngle < Math.PI / 2) {
+      out.push([
+        pt[0] - d * Math.cos(a1 + cornerAngle / 2),
+        pt[1] + d * Math.sin(a1 + cornerAngle / 2)]);
+
+    } else {
+      var pp1 = [
+        pt[0] - r * Math.cos(a1) + r * Math.sin(a1),
+        pt[1] + r * Math.sin(a1) + r * Math.cos(a1)];
+      var pp2 = [
+        pt[0] - r * Math.cos(a2) - r * Math.sin(a2),
+        pt[1] + r * Math.sin(a2) - r * Math.cos(a2)];
+      if (dist(pp1, pp2) > minDist) {
+        out.push(pp1);
+        out.push(pp2);
+      } else {
+        out.push([
+          pt[0] - d * Math.cos(a1 + cornerAngle / 2),
+          pt[1] + d * Math.sin(a1 + cornerAngle / 2)]);
+      }
+    }
+  }
+  
+  return out;
+}
+
+var app = angular.module('app', []);
+app.controller('Ctrl', function ($scope) {
+  var renderer = newGcodeRenderer(document.getElementById("preview"));
+
+  $scope.unit_dimension = 15;
+  $scope.x_units = 3;
+  $scope.y_units = 3;
+  $scope.angle = 90;
+
+  $scope.job = {
+    units: "mm",
+    bit_diameter: 3.175,
+    feed_rate: 254,
+    plunge_rate: 127,
+    default_depth: -3.175,
+  };
+  
+  $scope.$watchGroup(["unit_dimension", "x_units", "y_units", "angle"], function() {
+    var ang = $scope.angle * Math.PI / 180;
+    
+    // screwholes
+    var scut = {
+      type: "screwhole",
+      shaft_diameter: 3.175,
+      points: [],
+      cap_diameter: 6,
+      cap_depth: -0.5,
+    };
+    for (var x = $scope.x_units - 1; x > 0; x--) {
+      scut.points.push([x * $scope.unit_dimension, 0]);
+    }
+    scut.points.push([0, 0]);
+    for (var y = 1; y < $scope.y_units; y++) {
+      scut.points.push(rotatePoint([y * $scope.unit_dimension, 0], ang));
+    }
+    
+    // Generate a border around all of the hole points.
+    var pts = walkAroundTree(minimumSpanningTree(scut.points));
+
+    // for better visualization, swap the original holes with out MST holes.
+    scut.points = pts;
+
+
+    pts = simplifyPoints(pts);
+    pts = borderize(pts, $scope.unit_dimension / 2, $scope.job.bit_diameter);
+    var border = {
+      type: "profile",
+      side: "outside",
+      corner_compensation: true,
+      corner_radius: $scope.job.bit_diameter / 2,
+      points: pts,
+    };
+
+    // put everything in the same quadrant.
+    var minPt = minPoint(scut.points.concat(border.points));
+    scut.points = translatePts(scut.points, minPt);
+    border.points = translatePts(border.points, minPt);
+    $scope.job.cuts = [scut, border];
+    
+    $scope.yaml = JSON.stringify($scope.job, null, "  ");
+    
+    var processedJob = opencut.toGCode($scope.job || {});
+    $scope.gcode = processedJob.gcode.join("\n");
+    renderer.renderGcode($scope.gcode, {'bit_diameter': $scope.job.bit_diameter});
+  });
+});
+
+      
+    </script>
+  </head>
+  <body ng-controller="Ctrl">
+    <nav id="top-nav">
+      <h1>extrusion bracket generator</h1>
+      <button disabled ng-click="exportGcode()">export gcode</button>
+    </nav>
+
+    <main>
+      <article>
+        <div>
+          unit dimension: <input type="number" ng-model="unit_dimension" min="0"
+              ng-model-options="{updateOn:'default blur',debounce:{'default':100, 'blur':0}}">
+        </div>
+        <div>
+          x units: <input type="number" ng-model="x_units" min="1"
+              ng-model-options="{updateOn:'default blur',debounce:{'default':100, 'blur':0}}">
+        </div>
+        <div>
+          y units: <input type="number" ng-model="y_units" min="1"
+              ng-model-options="{updateOn:'default blur',debounce:{'default':100, 'blur':0}}">
+        </div>
+        <div>
+          bracket angle: <input type="number" ng-model="angle" min="0" max="180" step="5"
+              ng-model-options="{updateOn:'default blur',debounce:{'default':100, 'blur':0}}">
+        </div>
+
+        <pre>{{yaml}}</pre>
+      </article>      
+
+      <aside>
+      	<canvas id="preview"></canvas>
+      </aside>
+    </main>
+  </body>
+</html>
