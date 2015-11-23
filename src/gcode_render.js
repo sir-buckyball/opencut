@@ -18,9 +18,14 @@ function newGcodeRenderer(canvas) {
   };
 
   /* Resize the paperjs view to fit everything rendered. */
-  var resizeView = function() {
+  var resizeView = function(options) {
     var workspaceWidth = Math.max(analysis.maxPos.X - analysis.minPos.X, 50);
     var workspaceDepth = Math.max(analysis.maxPos.Y - analysis.minPos.Y, 50);
+
+    if (options.bit_diameter) {
+      workspaceWidth += options.bit_diameter * 2;
+      workspaceDepth += options.bit_diameter * 2;
+    }
 
     // Set an appropriate zoom/centering given our analysis.
     paper.view.setZoom(Math.min(
@@ -59,7 +64,7 @@ function newGcodeRenderer(canvas) {
 
     // Run an analysis on the gcode to determine the appropriate bounds for rendering.
     analysis = analyzeGcode(commandSequence);
-    resizeView();
+    resizeView(options);
 
     // Clear out any previous paths.
     paper.project.clear();
