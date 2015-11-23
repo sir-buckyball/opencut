@@ -88,6 +88,19 @@ function dist(p1, p2) {
   return Math.sqrt(Math.pow(p1[0] - p2[0], 2) + Math.pow(p1[1] - p2[1], 2));
 }
 
+function dedup(pts) {
+  var dupcheck = {};
+  var nodups = [];
+  for (var i = 0; i < pts.length; i++) {
+    var p = pts[i];
+    if (!dupcheck[p]) {
+      dupcheck[p] = true;
+      nodups.push(p);
+    }
+  }
+  return nodups;
+}
+
 /**
  * Simplify a point list by removing redundant colinear points.
  */
@@ -106,8 +119,6 @@ function simplifyPoints(pts) {
     var res = ba > 0 || Math.abs(d13) < 0.001 || (d12 < d13 && d23 < d13);
     if (res) {
       npts.push(p2);
-    } else {
-      console.log("dropping: " + JSON.stringify([p2], ba, d13, d12, d23));
     }
   }
   if (npts[0][0] != npts[npts.length - 1][0]
@@ -135,6 +146,7 @@ function simplifyPoints(pts) {
  *  - pick the closet unconnected vertext and connect it
  */
 function minimumSpanningTree(pts) {
+  pts = dedup(pts);
   var remainingPts = [];
   for (var i = 0; i < pts.length; i++) {
     remainingPts.push({x: pts[i][0], y:pts[i][1], children: []});
@@ -275,48 +287,58 @@ app.controller('Ctrl', function ($scope) {
   $scope.x_units = 3;
   $scope.y_units = 3;
   $scope.angle = 90;
-
+  $scope.corner_radius = 0;
+  
   $scope.job = {
     units: "mm",
     bit_diameter: 3.175,
-    feed_rate: 254,
-    plunge_rate: 127,
+    feed_rate: 250,
+    plunge_rate: 125,
     default_depth: -3.175,
   };
   
-  $scope.$watchGroup(["unit_dimension", "x_units", "y_units", "angle"], function() {
+  $scope.$watchGroup([
+      "unit_dimension",
+      "x_units",
+      "y_units",
+      "angle",
+      "corner_radius",
+      "job.units",
+      "job.bit_diameter",
+      "job.feed_rate",
+      "job.plunge_rate",
+      "job.default_depth",], function() {
     var ang = $scope.angle * Math.PI / 180;
     
+    // Calculate where we want holes.
+    var pts = [];
+    for (var x = 0; x < $scope.x_units; x++) {
+      pts.push([x * $scope.unit_dimension, 0]);
+    }
+    for (var y = 0; y < $scope.y_units; y++) {
+      pts.push(rotatePoint([y * $scope.unit_dimension, 0], ang));
+    }
+    
+    // Generate a border around all of the hole points.
+    pts = walkAroundTree(minimumSpanningTree(pts));
+
     // screwholes
     var scut = {
       type: "screwhole",
       shaft_diameter: 3.175,
-      points: [],
+      points: dedup(pts),
       cap_diameter: 6,
       cap_depth: -0.5,
     };
-    for (var x = $scope.x_units - 1; x > 0; x--) {
-      scut.points.push([x * $scope.unit_dimension, 0]);
-    }
-    scut.points.push([0, 0]);
-    for (var y = 1; y < $scope.y_units; y++) {
-      scut.points.push(rotatePoint([y * $scope.unit_dimension, 0], ang));
-    }
-    
-    // Generate a border around all of the hole points.
-    var pts = walkAroundTree(minimumSpanningTree(scut.points));
 
-    // for better visualization, swap the original holes with out MST holes.
-    scut.points = pts;
-
-
+    // Border.
     pts = simplifyPoints(pts);
-    pts = borderize(pts, $scope.unit_dimension / 2, $scope.job.bit_diameter);
+    pts = borderize(pts, $scope.unit_dimension / 2, $scope.corner_radius * 2);
     var border = {
       type: "profile",
       side: "outside",
       corner_compensation: true,
-      corner_radius: $scope.job.bit_diameter / 2,
+      corner_radius: $scope.corner_radius,
       points: pts,
     };
 
@@ -345,6 +367,7 @@ app.controller('Ctrl', function ($scope) {
 
     <main>
       <article>
+        <h3>bracket configuration</h3>
         <div>
           unit dimension: <input type="number" ng-model="unit_dimension" min="0"
               ng-model-options="{updateOn:'default blur',debounce:{'default':100, 'blur':0}}">
@@ -361,7 +384,42 @@ app.controller('Ctrl', function ($scope) {
           bracket angle: <input type="number" ng-model="angle" min="0" max="180" step="5"
               ng-model-options="{updateOn:'default blur',debounce:{'default':100, 'blur':0}}">
         </div>
+        
+        <div>
+          corner radius: <input type="number" ng-model="corner_radius" min="0" step="1"
+              ng-model-options="{updateOn:'default blur',debounce:{'default':100, 'blur':0}}">
+        </div>
 
+
+        <h3>machining configuration</h3>
+
+        <div>
+          units: <select ng-model="job.units"
+              ng-model-options="{updateOn:'default blur',debounce:{'default':100, 'blur':0}}">
+            <option>mm</option>
+            <option>inches</option>
+          </select>
+        </div>
+        
+        <div>
+          bit diameter: <input type="number" ng-model="job.bit_diameter"
+              ng-model-options="{updateOn:'default blur',debounce:{'default':100, 'blur':0}}">
+        </div>
+
+        <div>
+          feed rate ({{job.units}}/minute): <input type="number" ng-model="job.feed_rate"
+              ng-model-options="{updateOn:'default blur',debounce:{'default':100, 'blur':0}}">
+        </div>
+
+        <div>
+          plunge rate ({{job.units}}/minute): <input type="number" ng-model="job.plunge_rate"
+              ng-model-options="{updateOn:'default blur',debounce:{'default':100, 'blur':0}}">
+        </div>
+        <div>
+          depth: <input type="number" ng-model="job.default_depth"
+              ng-model-options="{updateOn:'default blur',debounce:{'default':100, 'blur':0}}">
+        </div>
+        
         <pre>{{yaml}}</pre>
       </article>      
 
