@@ -111,7 +111,7 @@ function simplifyPoints(pts) {
     var p1 = pts[(i - 1) < 0 ? pts.length - 2 : i - 1];
     var p2 = pts[i];
     var p3 = pts[(i + 1) >= pts.length ? 1 : i + 1];
-    
+
     var ba = bendAngle(p1, p2, p3);
     var d12 = dist(p1, p2);
     var d23 = dist(p2, p3);
@@ -140,7 +140,7 @@ function simplifyPoints(pts) {
 
 /**
  * Create a minimum spanning tree for a given set of points.
- * 
+ *
  * This function uses Prim's algorighm:
  *  - start with a random vertex
  *  - pick the closet unconnected vertext and connect it
@@ -151,7 +151,7 @@ function minimumSpanningTree(pts) {
   for (var i = 0; i < pts.length; i++) {
     remainingPts.push({x: pts[i][0], y:pts[i][1], children: []});
   }
-  
+
   var mst = [remainingPts.shift()];
   while (remainingPts.length > 0) {
     var closestTree = null;
@@ -178,7 +178,7 @@ function minimumSpanningTree(pts) {
     remainingPts = remainingPts.slice(0,
         closestRemaining).concat(remainingPts.slice(closestRemaining + 1));
   }
-  
+
   return mst[0];
 }
 
@@ -188,7 +188,7 @@ function minimumSpanningTree(pts) {
  */
 function walkAroundTree(root, parent) {
   var pts = [[root.x, root.y]];
-  
+
   // Sort the children so they are in a consistent order from the parent.
   parent = parent || {x:0, y:0};
   root.children.sort(function(c1, c2) {
@@ -207,7 +207,7 @@ function walkAroundTree(root, parent) {
 /**
  * Generate a path of points walking around the input points at the given
  * distance.
- * 
+ *
  * @param pts {Array<Number>} - points to make a border around
  * @param distance {Number} - distance to maintain from the points
  * @param minDist {NUmber} - the minimum distance when splitting a corner
@@ -242,7 +242,7 @@ function borderize(pts, distance, minDist) {
     // Convenience variable for the bit radius.
     var r = distance;
     var d = r / Math.cos(cornerAngle / 2);
-    
+
     if (cornerAngle < -Math.PI / 2) {
       out.push([
         pt[0] - d * Math.cos(a1 + cornerAngle / 2),
@@ -275,7 +275,7 @@ function borderize(pts, distance, minDist) {
       }
     }
   }
-  
+
   return out;
 }
 
@@ -288,15 +288,16 @@ app.controller('Ctrl', function ($scope) {
   $scope.y_units = 3;
   $scope.angle = 90;
   $scope.corner_radius = 0;
-  
+
   $scope.job = {
     units: "mm",
     bit_diameter: 3.175,
     feed_rate: 250,
     plunge_rate: 125,
     default_depth: -3.175,
+    z_step_size: 1.25,
   };
-  
+
   $scope.$watchGroup([
       "unit_dimension",
       "x_units",
@@ -309,7 +310,7 @@ app.controller('Ctrl', function ($scope) {
       "job.plunge_rate",
       "job.default_depth",], function() {
     var ang = $scope.angle * Math.PI / 180;
-    
+
     // Calculate where we want holes.
     var pts = [];
     for (var x = 0; x < $scope.x_units; x++) {
@@ -318,7 +319,7 @@ app.controller('Ctrl', function ($scope) {
     for (var y = 0; y < $scope.y_units; y++) {
       pts.push(rotatePoint([y * $scope.unit_dimension, 0], ang));
     }
-    
+
     // Generate a border around all of the hole points.
     pts = walkAroundTree(minimumSpanningTree(pts));
 
@@ -347,22 +348,38 @@ app.controller('Ctrl', function ($scope) {
     scut.points = translatePts(scut.points, minPt);
     border.points = translatePts(border.points, minPt);
     $scope.job.cuts = [scut, border];
-    
+
     $scope.yaml = JSON.stringify($scope.job, null, "  ");
-    
+
     var processedJob = opencut.toGCode($scope.job || {});
     $scope.gcode = processedJob.gcode.join("\n");
+    $scope.errors = processedJob.errors;
+    $scope.warnings = processedJob.warnings;
     renderer.renderGcode($scope.gcode, {'bit_diameter': $scope.job.bit_diameter});
   });
+
+  $scope.exportGcode = function(e) {
+    if (e != undefined) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+
+    var filename = "L-" + $scope.angle + "-"
+        + $scope.x_units + "x" + $scope.y_units + "x" + $scope.unit_dimension
+        + ".gcode";
+    var blob = new Blob([$scope.gcode], {type: "text/x-gcode"});
+    console.log("saving file: " + filename);
+    window.saveAs(blob, filename);
+  };
 });
 
-      
+
     </script>
   </head>
   <body ng-controller="Ctrl">
     <nav id="top-nav">
       <h1>extrusion bracket generator</h1>
-      <button disabled ng-click="exportGcode()">export gcode</button>
+      <button ng-click="exportGcode()">export gcode</button>
     </nav>
 
     <main>
@@ -384,7 +401,7 @@ app.controller('Ctrl', function ($scope) {
           bracket angle: <input type="number" ng-model="angle" min="0" max="180" step="5"
               ng-model-options="{updateOn:'default blur',debounce:{'default':100, 'blur':0}}">
         </div>
-        
+
         <div>
           corner radius: <input type="number" ng-model="corner_radius" min="0" step="1"
               ng-model-options="{updateOn:'default blur',debounce:{'default':100, 'blur':0}}">
@@ -400,7 +417,7 @@ app.controller('Ctrl', function ($scope) {
             <option>inches</option>
           </select>
         </div>
-        
+
         <div>
           bit diameter: <input type="number" ng-model="job.bit_diameter"
               ng-model-options="{updateOn:'default blur',debounce:{'default':100, 'blur':0}}">
@@ -416,12 +433,18 @@ app.controller('Ctrl', function ($scope) {
               ng-model-options="{updateOn:'default blur',debounce:{'default':100, 'blur':0}}">
         </div>
         <div>
-          depth: <input type="number" ng-model="job.default_depth"
+          depth: <input type="number" ng-model="job.default_depth" max="0"
               ng-model-options="{updateOn:'default blur',debounce:{'default':100, 'blur':0}}">
         </div>
-        
+        <div>
+          z_step_size: <input type="number" ng-model="job.z_step_size" min="0"
+              ng-model-options="{updateOn:'default blur',debounce:{'default':100, 'blur':0}}">
+        </div>
+
+        <div class="user-error" ng-repeat="e in errors">{{e}}</div>
+        <div class="user-warning" ng-repeat="w in warnings">{{w}}</div>
         <pre>{{yaml}}</pre>
-      </article>      
+      </article>
 
       <aside>
       	<canvas id="preview"></canvas>
