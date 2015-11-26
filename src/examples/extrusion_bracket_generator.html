@@ -357,6 +357,20 @@ app.controller('Ctrl', function ($scope) {
     $scope.warnings = processedJob.warnings;
     renderer.renderGcode($scope.gcode, {'bit_diameter': $scope.job.bit_diameter});
   });
+
+  $scope.exportGcode = function(e) {
+    if (e != undefined) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+
+    var filename = "L-" + $scope.angle + "-"
+        + $scope.x_units + "x" + $scope.y_units + "x" + $scope.unit_dimension
+        + ".gcode";
+    var blob = new Blob([$scope.gcode], {type: "text/x-gcode"});
+    console.log("saving file: " + filename);
+    window.saveAs(blob, filename);
+  };
 });
 
 
@@ -365,7 +379,7 @@ app.controller('Ctrl', function ($scope) {
   <body ng-controller="Ctrl">
     <nav id="top-nav">
       <h1>extrusion bracket generator</h1>
-      <button disabled ng-click="exportGcode()">export gcode</button>
+      <button ng-click="exportGcode()">export gcode</button>
     </nav>
 
     <main>
