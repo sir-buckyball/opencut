@@ -296,6 +296,20 @@ app.controller('Ctrl', function ($scope) {
     plunge_rate: 125,
     default_depth: -3.175,
     z_step_size: 1.25,
+    cuts: [
+      {
+        type: "screwhole",
+        shaft_diameter: 3.175,
+        cap_diameter: 6,
+        cap_depth: -0.5,
+      },
+      {
+        type: "profile",
+        side: "outside",
+        corner_compensation: true,
+        corner_radius: $scope.corner_radius,
+      }
+    ],
   };
 
   $scope.$watchGroup([
@@ -308,7 +322,10 @@ app.controller('Ctrl', function ($scope) {
       "job.bit_diameter",
       "job.feed_rate",
       "job.plunge_rate",
-      "job.default_depth",], function() {
+      "job.default_depth",
+      "job.cuts[0].shaft_diameter",
+      "job.cuts[0].cap_diameter",
+      "job.cuts[0].cap_depth",], function() {
     var ang = $scope.angle * Math.PI / 180;
 
     // Calculate where we want holes.
@@ -324,24 +341,14 @@ app.controller('Ctrl', function ($scope) {
     pts = walkAroundTree(minimumSpanningTree(pts));
 
     // screwholes
-    var scut = {
-      type: "screwhole",
-      shaft_diameter: 3.175,
-      points: dedup(pts),
-      cap_diameter: 6,
-      cap_depth: -0.5,
-    };
+    var scut = $scope.job.cuts[0];
+    scut.points = dedup(pts);
 
     // Border.
     pts = simplifyPoints(pts);
     pts = borderize(pts, $scope.unit_dimension / 2, $scope.corner_radius * 2);
-    var border = {
-      type: "profile",
-      side: "outside",
-      corner_compensation: true,
-      corner_radius: $scope.corner_radius,
-      points: pts,
-    };
+    var border = $scope.job.cuts[1];
+    border.points = pts;
 
     // put everything in the same quadrant.
     var minPt = minPoint(scut.points.concat(border.points));
@@ -401,9 +408,20 @@ app.controller('Ctrl', function ($scope) {
           bracket angle: <input type="number" ng-model="angle" min="0" max="180" step="5"
               ng-model-options="{updateOn:'default blur',debounce:{'default':100, 'blur':0}}">
         </div>
-
         <div>
           corner radius: <input type="number" ng-model="corner_radius" min="0" step="1"
+              ng-model-options="{updateOn:'default blur',debounce:{'default':100, 'blur':0}}">
+        </div>
+        <div>
+          screw shaft diameter: <input type="number" ng-model="job.cuts[0].shaft_diameter" min="0" step="1"
+              ng-model-options="{updateOn:'default blur',debounce:{'default':100, 'blur':0}}">
+        </div>
+        <div>
+          screw cap diameter: <input type="number" ng-model="job.cuts[0].cap_diameter" min="0" step="1"
+              ng-model-options="{updateOn:'default blur',debounce:{'default':100, 'blur':0}}">
+        </div>
+        <div>
+          screw cap depth: <input type="number" ng-model="job.cuts[0].cap_depth" max="0" step="1"
               ng-model-options="{updateOn:'default blur',debounce:{'default':100, 'blur':0}}">
         </div>
 
