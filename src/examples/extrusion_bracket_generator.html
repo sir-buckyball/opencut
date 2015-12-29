@@ -239,6 +239,12 @@ function borderize(pts, distance, minDist) {
       cornerAngle -= 2 * Math.PI;
     }
 
+    // Sometimes cornerAngle is pretty much -PI, which makes this almost
+    // divide by 0, which makes 'd' mega huge.
+    if (cornerAngle < -Math.PI + 0.001) {
+      cornerAngle = Math.PI;
+    }
+
     // Convenience variable for the bit radius.
     var r = distance;
     var d = r / Math.cos(cornerAngle / 2);
@@ -279,10 +285,56 @@ function borderize(pts, distance, minDist) {
   return out;
 }
 
+function bracketL($scope) {
+  var ang = $scope.angle * Math.PI / 180;
+  var pts = [];
+  for (var x = 0; x < $scope.x_units; x++) {
+    pts.push([x * $scope.unit_dimension, 0]);
+  }
+  for (var y = 0; y < $scope.y_units; y++) {
+    pts.push(rotatePoint([y * $scope.unit_dimension, 0], ang));
+  }
+  return dedup(pts);
+}
+
+function bracketH($scope) {
+  var ang = $scope.angle * Math.PI / 180;
+  var h = Math.floor($scope.y_units / 2);
+  var pts = [];
+  for (var x = 0; x < $scope.x_units; x++) {
+    pts.push([x * $scope.unit_dimension, 0]);
+  }
+  for (var y1 = 0; y1 < $scope.y_units; y1++) {
+    pts.push(rotatePoint([(y1 - h) * $scope.unit_dimension, 0], ang));
+  }
+  var x2 = ($scope.x_units - 1) * $scope.unit_dimension;
+  var yoff = 1 + h - $scope.x_units;
+  for (var y2 = 0; y2 < $scope.y_units; y2++) {
+    pts.push(rotatePoint([(y2 - yoff) * $scope.unit_dimension, 0], -ang, [x2, 0]));
+  }
+  return dedup(pts);
+}
+
+function bracketT($scope) {
+  var ang = $scope.angle * Math.PI / 180;
+  var h = Math.floor($scope.x_units / 2);
+  var ud = $scope.unit_dimension;
+  var pts = [];
+  for (var x = 0; x < $scope.x_units; x++) {
+    pts.push([x * ud, 0]);
+  }
+  for (var y = 0; y < $scope.y_units; y++) {
+    pts.push(rotatePoint([(y + h) * ud, 0], -ang, [h * ud, 0]));
+  }
+  return dedup(pts);
+}
+
+
 var app = angular.module('app', []);
 app.controller('Ctrl', function ($scope) {
   var renderer = newGcodeRenderer(document.getElementById("preview"));
 
+  $scope.bracket_type = "L";
   $scope.unit_dimension = 15;
   $scope.x_units = 3;
   $scope.y_units = 3;
@@ -313,6 +365,7 @@ app.controller('Ctrl', function ($scope) {
   };
 
   $scope.$watchGroup([
+      "bracket_type",
       "unit_dimension",
       "x_units",
       "y_units",
@@ -326,15 +379,15 @@ app.controller('Ctrl', function ($scope) {
       "job.cuts[0].shaft_diameter",
       "job.cuts[0].cap_diameter",
       "job.cuts[0].cap_depth",], function() {
-    var ang = $scope.angle * Math.PI / 180;
 
     // Calculate where we want holes.
-    var pts = [];
-    for (var x = 0; x < $scope.x_units; x++) {
-      pts.push([x * $scope.unit_dimension, 0]);
-    }
-    for (var y = 0; y < $scope.y_units; y++) {
-      pts.push(rotatePoint([y * $scope.unit_dimension, 0], ang));
+    var pts;
+    if ($scope.bracket_type == "L") {
+      pts = bracketL($scope);
+    } else if ($scope.bracket_type == "H") {
+      pts = bracketH($scope);
+    } else if ($scope.bracket_type == "T") {
+      pts = bracketT($scope);
     }
 
     // Generate a border around all of the hole points.
@@ -392,6 +445,15 @@ app.controller('Ctrl', function ($scope) {
     <main>
       <article>
         <h3>bracket configuration</h3>
+        <div>
+          bracket type: <select ng-model="bracket_type"
+              ng-model-options="{updateOn:'default blur',debounce:{'default':100, 'blur':0}}">
+            <option>H</option>
+            <option>L</option>
+            <option>T</option>
+          </select>
+        </div>
+
         <div>
           unit dimension: <input type="number" ng-model="unit_dimension" min="0"
               ng-model-options="{updateOn:'default blur',debounce:{'default':100, 'blur':0}}">

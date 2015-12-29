@@ -19,6 +19,7 @@ function newGcodeRenderer(canvas) {
 
   /* Resize the paperjs view to fit everything rendered. */
   var resizeView = function(options) {
+    options = options || {};
     var workspaceWidth = Math.max(analysis.maxPos.X - analysis.minPos.X, 50);
     var workspaceDepth = Math.max(analysis.maxPos.Y - analysis.minPos.Y, 50);
 
