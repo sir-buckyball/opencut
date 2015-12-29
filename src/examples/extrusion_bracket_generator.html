@@ -307,10 +307,24 @@ function bracketH($scope) {
   for (var y1 = 0; y1 < $scope.y_units; y1++) {
     pts.push(rotatePoint([(y1 - h) * $scope.unit_dimension, 0], ang));
   }
+  var x2 = ($scope.x_units - 1) * $scope.unit_dimension;
+  var yoff = 1 + h - $scope.x_units;
   for (var y2 = 0; y2 < $scope.y_units; y2++) {
-    var x2 = ($scope.x_units - 1) * $scope.unit_dimension;
-    var yoff = 1 + h - $scope.x_units;
     pts.push(rotatePoint([(y2 - yoff) * $scope.unit_dimension, 0], -ang, [x2, 0]));
+  }
+  return dedup(pts);
+}
+
+function bracketT($scope) {
+  var ang = $scope.angle * Math.PI / 180;
+  var h = Math.floor($scope.x_units / 2);
+  var ud = $scope.unit_dimension;
+  var pts = [];
+  for (var x = 0; x < $scope.x_units; x++) {
+    pts.push([x * ud, 0]);
+  }
+  for (var y = 0; y < $scope.y_units; y++) {
+    pts.push(rotatePoint([(y + h) * ud, 0], -ang, [h * ud, 0]));
   }
   return dedup(pts);
 }
@@ -365,7 +379,6 @@ app.controller('Ctrl', function ($scope) {
       "job.cuts[0].shaft_diameter",
       "job.cuts[0].cap_diameter",
       "job.cuts[0].cap_depth",], function() {
-    var ang = $scope.angle * Math.PI / 180;
 
     // Calculate where we want holes.
     var pts;
@@ -373,6 +386,8 @@ app.controller('Ctrl', function ($scope) {
       pts = bracketL($scope);
     } else if ($scope.bracket_type == "H") {
       pts = bracketH($scope);
+    } else if ($scope.bracket_type == "T") {
+      pts = bracketT($scope);
     }
 
     // Generate a border around all of the hole points.
@@ -433,8 +448,9 @@ app.controller('Ctrl', function ($scope) {
         <div>
           bracket type: <select ng-model="bracket_type"
               ng-model-options="{updateOn:'default blur',debounce:{'default':100, 'blur':0}}">
-            <option>L</option>
             <option>H</option>
+            <option>L</option>
+            <option>T</option>
           </select>
         </div>
 
