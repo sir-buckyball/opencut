@@ -304,8 +304,13 @@ function bracketH($scope) {
   for (var x = 0; x < $scope.x_units; x++) {
     pts.push([x * $scope.unit_dimension, 0]);
   }
-  for (var y = 0; y < $scope.y_units; y++) {
-    pts.push(rotatePoint([(y - h) * $scope.unit_dimension, 0], ang));
+  for (var y1 = 0; y1 < $scope.y_units; y1++) {
+    pts.push(rotatePoint([(y1 - h) * $scope.unit_dimension, 0], ang));
+  }
+  for (var y2 = 0; y2 < $scope.y_units; y2++) {
+    var x2 = ($scope.x_units - 1) * $scope.unit_dimension;
+    var yoff = 1 + h - $scope.x_units;
+    pts.push(rotatePoint([(y2 - yoff) * $scope.unit_dimension, 0], -ang, [x2, 0]));
   }
   return dedup(pts);
 }
