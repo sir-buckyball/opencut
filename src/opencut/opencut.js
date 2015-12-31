@@ -257,9 +257,18 @@ window.opencut = function() {
       }
     }
 
+    // uniqify warnings and errors.
+    var uniq = function(arr) {
+      var u = {};
+      for (var i = 0; i < arr.length; i++) {
+        u[arr[i]] = true;
+      }
+      return Object.keys(u);
+    };
+
     return {
-      "warnings": warnings,
-      "errors": errors,
+      "warnings": uniq(warnings),
+      "errors": uniq(errors),
       "gcode": commands
     };
   };
