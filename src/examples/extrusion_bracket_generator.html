@@ -329,6 +329,20 @@ function bracketT($scope) {
   return dedup(pts);
 }
 
+function bracketX($scope) {
+  var ang = $scope.angle * Math.PI / 180;
+  var hx = Math.floor($scope.x_units / 2);
+  var hy = Math.floor($scope.y_units / 2);
+  var ud = $scope.unit_dimension;
+  var pts = [];
+  for (var x = 0; x < $scope.x_units; x++) {
+    pts.push([x * ud, 0]);
+  }
+  for (var y = 0; y < $scope.y_units; y++) {
+    pts.push(rotatePoint([(y - hy + hx) * ud, 0], -ang, [hx * ud, 0]));
+  }
+  return dedup(pts);
+}
 
 var app = angular.module('app', []);
 app.controller('Ctrl', function ($scope) {
@@ -388,6 +402,8 @@ app.controller('Ctrl', function ($scope) {
       pts = bracketH($scope);
     } else if ($scope.bracket_type == "T") {
       pts = bracketT($scope);
+    } else if ($scope.bracket_type == "X") {
+      pts = bracketX($scope);
     }
 
     // Generate a border around all of the hole points.
@@ -451,6 +467,7 @@ app.controller('Ctrl', function ($scope) {
             <option>H</option>
             <option>L</option>
             <option>T</option>
+            <option>X</option>
           </select>
         </div>
 
