@@ -278,7 +278,7 @@
                 " Y" + (pt[1] - r * Math.sin(a2) - coff * Math.cos(a2)) +
                 " I" + (-(r + cr) * Math.cos(a1)) +
                 " J" + ((r + cr) * Math.sin(a1)) +
-                " F" + workspace.feed_rate)
+                " F" + workspace.feed_rate);
 
           } else if (cornerAngle > 0) {
             // Cut to the corner if compensation is enabled.
@@ -297,7 +297,7 @@
                   " Y" + (pt[1] - r * Math.sin(a2) - coff * Math.cos(a2)) +
                   " I" + ((cr - r) * Math.cos(a1)) +
                   " J" + (-(cr - r) * Math.sin(a1)) +
-                  " F" + workspace.feed_rate)
+                  " F" + workspace.feed_rate);
             }
           }
         }
