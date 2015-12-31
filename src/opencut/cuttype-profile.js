@@ -236,7 +236,10 @@
             : Math.max((cornerAngle > 0) ? r: 0, cut.corner_radius);
         var coff = -cr * Math.tan(Math.abs(cornerAngle) / 2);
         if (coff * coff > Math.pow(pt[0] - prev[0], 2) + Math.pow(pt[1] - prev[1], 2)) {
-          throw "corner_radius [" + cut.corner_radius + "] is too large for point " + JSON.stringify(pt);
+          if (cut.corner_radius > 0) {
+            throw "corner_radius [" + cut.corner_radius + "] is too large for point " + JSON.stringify(pt);
+          }
+          warnings.push("too tight a corner detected at " + JSON.stringify(pt));
         }
         var toX = pt[0] + r * Math.cos(a1) + coff * Math.sin(a1);
         var toY = pt[1] - r * Math.sin(a1) + coff * Math.cos(a1);
@@ -275,7 +278,7 @@
                 " Y" + (pt[1] - r * Math.sin(a2) - coff * Math.cos(a2)) +
                 " I" + (-(r + cr) * Math.cos(a1)) +
                 " J" + ((r + cr) * Math.sin(a1)) +
-                " F" + workspace.feed_rate)
+                " F" + workspace.feed_rate);
 
           } else if (cornerAngle > 0) {
             // Cut to the corner if compensation is enabled.
@@ -294,7 +297,7 @@
                   " Y" + (pt[1] - r * Math.sin(a2) - coff * Math.cos(a2)) +
                   " I" + ((cr - r) * Math.cos(a1)) +
                   " J" + (-(cr - r) * Math.sin(a1)) +
-                  " F" + workspace.feed_rate)
+                  " F" + workspace.feed_rate);
             }
           }
         }
