@@ -368,7 +368,7 @@ app.controller('Ctrl', function ($scope) {
   $scope.x_units = 3;
   $scope.y_units = 3;
   $scope.angle = 90;
-  $scope.corner_radius = 0;
+  $scope.corner_radius = 2;
 
   $scope.job = {
     units: "mm",
@@ -388,7 +388,7 @@ app.controller('Ctrl', function ($scope) {
         type: "profile",
         side: "outside",
         corner_compensation: true,
-        corner_radius: $scope.corner_radius,
+        corner_radius: 0,
       }
     ],
   };
@@ -439,6 +439,7 @@ app.controller('Ctrl', function ($scope) {
     scut.points = translatePts(scut.points, minPt);
     border.points = translatePts(border.points, minPt);
     $scope.job.cuts = [scut, border];
+    $scope.job.cuts[1].corner_radius = $scope.corner_radius;
 
     $scope.yaml = JSON.stringify($scope.job, function(key, val) {
       return val.toFixed ? Number(val.toFixed(6)) : val;
