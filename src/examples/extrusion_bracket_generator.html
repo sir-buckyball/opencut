@@ -107,7 +107,7 @@ function dedup(pts) {
   };
   for (var i = 0; i < pts.length; i++) {
     var p = pts[i];
-    var key = norm(p[0]) + ":" + norm(p[0]);
+    var key = norm(p[0]) + ":" + norm(p[1]);
     if (!dupcheck[key]) {
       dupcheck[key] = true;
       nodups.push(p);
@@ -440,7 +440,9 @@ app.controller('Ctrl', function ($scope) {
     border.points = translatePts(border.points, minPt);
     $scope.job.cuts = [scut, border];
 
-    $scope.yaml = JSON.stringify($scope.job, null, "  ");
+    $scope.yaml = JSON.stringify($scope.job, function(key, val) {
+      return val.toFixed ? Number(val.toFixed(6)) : val;
+    }, "  ");
 
     var processedJob = opencut.toGCode($scope.job || {});
     $scope.gcode = processedJob.gcode.join("\n");
