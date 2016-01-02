@@ -288,7 +288,9 @@ function borderize(pts, distance, minDist) {
         pt[1] + r * Math.sin(a2) - r * Math.cos(a2)];
       if (dist(pp1, pp2) > minDist) {
         out.push(pp1);
-        out.push(pp2);
+        if (pts.length - j > 1) {
+          out.push(pp2);
+        }
       } else {
         out.push([
           pt[0] - d * Math.cos(a1 + cornerAngle / 2),
