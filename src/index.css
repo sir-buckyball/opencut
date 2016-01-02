@@ -97,3 +97,23 @@ aside {
   margin: 2px;
   border-radius: 3px;
 }
+
+
+@media (min-width: 1000px) {
+  #preview {
+    height: 320px;
+    width: 480px;
+  }
+  aside {
+    width: 480px;
+  }
+}
+@media (min-width: 1200px) {
+  #preview {
+    height: 480px;
+    width: 640px;
+  }
+  aside {
+    width: 640px;
+  }
+}

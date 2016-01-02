@@ -10,6 +10,12 @@
     <link rel="stylesheet" href="../deps/codemirror-4.6/codemirror.css">
     <link rel="stylesheet" href="../deps/hotkeys.min.css">
     <link rel="stylesheet" href="../index.css">
+    <style>
+#yaml-out {
+  width: 100%;
+  height: 40ex;
+}
+    </style>
     <script type="text/javascript" src="../deps/jquery-2.1.4.min.js"></script>
     <script type="text/javascript" src="../deps/angular.min.js"></script>
     <script type="text/javascript" src="../deps/codemirror-4.6/codemirror.js"></script>
@@ -91,10 +97,19 @@ function dist(p1, p2) {
 function dedup(pts) {
   var dupcheck = {};
   var nodups = [];
+  // To account for floating point variance, round the points a bit.
+  var norm = function(n) {
+    var s = n.toFixed(6);
+    if (s == "-0.000000") {
+      return "0.000000";
+    }
+    return s;
+  };
   for (var i = 0; i < pts.length; i++) {
     var p = pts[i];
-    if (!dupcheck[p]) {
-      dupcheck[p] = true;
+    var key = norm(p[0]) + ":" + norm(p[0]);
+    if (!dupcheck[key]) {
+      dupcheck[key] = true;
       nodups.push(p);
     }
   }
@@ -538,9 +553,10 @@ app.controller('Ctrl', function ($scope) {
               ng-model-options="{updateOn:'default blur',debounce:{'default':100, 'blur':0}}">
         </div>
 
+        <h3>YAML output</h3>
         <div class="user-error" ng-repeat="e in errors">{{e}}</div>
         <div class="user-warning" ng-repeat="w in warnings">{{w}}</div>
-        <pre>{{yaml}}</pre>
+        <textarea id="yaml-out" readonly>{{yaml}}</textarea>
       </article>
 
       <aside>
