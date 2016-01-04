@@ -76,14 +76,21 @@ function rotatePoint(pt, angle, center) {
  * Return the bend angle between 3 points.
  */
 function bendAngle(p1, p2, p3) {
-    var a1 = Math.atan2(p2[0] - p1[0], p2[1] - p1[1]);
-    var a2 = Math.atan2(p3[0] - p2[0], p3[1] - p2[1]);
-    var ba = a2 - a1;
-    if (ba <= -Math.PI) {
-      ba += 2 * Math.PI;
-    } else if (ba > Math.PI) {
-      ba -= 2 * Math.PI;
-    }
+  return bendAngle4(p1, p2, p2, p3);
+}
+
+/**
+ * Return the bend angle between 2 lines defined by 4 points.
+ */
+function bendAngle4(p1, p2, p3, p4) {
+  var a1 = Math.atan2(p2[0] - p1[0], p2[1] - p1[1]);
+  var a2 = Math.atan2(p4[0] - p3[0], p4[1] - p3[1]);
+  var ba = a2 - a1;
+  if (ba <= -Math.PI) {
+    ba += 2 * Math.PI;
+  } else if (ba > Math.PI) {
+    ba -= 2 * Math.PI;
+  }
   return ba;
 }
 
@@ -288,7 +295,9 @@ function borderize(pts, distance, minDist) {
         pt[1] + r * Math.sin(a2) - r * Math.cos(a2)];
       if (dist(pp1, pp2) > minDist) {
         out.push(pp1);
-        out.push(pp2);
+        if (pts.length - j > 1) {
+          out.push(pp2);
+        }
       } else {
         out.push([
           pt[0] - d * Math.cos(a1 + cornerAngle / 2),
@@ -359,6 +368,49 @@ function bracketX($scope) {
   return dedup(pts);
 }
 
+/**
+ * Filter out features in a path which are too small for a cutting bit to
+ * cut.
+ */
+function filterSmallPathFeatures(pts, bitDiameter) {
+  if (pts.length < 4) {
+    return pts;
+  }
+  var npts = [pts[0], pts[1]];
+  for (var i = 2; i < pts.length - 1; i++) {
+    var p1 = npts[npts.length - 2];
+    var p2 = npts[npts.length - 1];
+    var p3 = pts[i];
+    var p4 = pts[i + 1];
+    if (dist(p2, p3) >= bitDiameter || bendAngle4(p1, p2, p3, p4) > 0) {
+      npts.push(p3);
+      continue;
+    }
+
+    // Edge case where we have a long skinny alley
+    if (dist(p1, p4) < bitDiameter) {
+      npts.pop();
+      npts.push(p4);
+      i++;
+      continue;
+    }
+
+    var denom = (p1[0] - p2[0]) * (p3[1] - p4[1]) - (p1[1] - p2[1]) * (p3[0] - p4[0]);
+    if (denom == 0) {
+      npts.push(p3);
+      continue;
+    }
+    var c1 = p1[0] * p2[1] - p1[1] * p2[0];
+    var c2 = p3[0] * p4[1] - p3[1] * p4[0];
+    var x = (c1 * (p3[0] - p4[0]) - c2 * (p1[0] - p2[0])) / denom;
+    var y = (c1 * (p3[1] - p4[1]) - c2 * (p1[1] - p2[1])) / denom;
+    npts.pop();
+    npts.push([x, y]);
+  }
+  npts.push(pts[pts.length - 1]);
+  return npts;
+}
+
 var app = angular.module('app', []);
 app.controller('Ctrl', function ($scope) {
   var renderer = newGcodeRenderer(document.getElementById("preview"));
@@ -368,7 +420,7 @@ app.controller('Ctrl', function ($scope) {
   $scope.x_units = 3;
   $scope.y_units = 3;
   $scope.angle = 90;
-  $scope.corner_radius = 0;
+  $scope.corner_radius = 2;
 
   $scope.job = {
     units: "mm",
@@ -388,7 +440,7 @@ app.controller('Ctrl', function ($scope) {
         type: "profile",
         side: "outside",
         corner_compensation: true,
-        corner_radius: $scope.corner_radius,
+        corner_radius: 0,
       }
     ],
   };
@@ -431,6 +483,7 @@ app.controller('Ctrl', function ($scope) {
     // Border.
     pts = simplifyPoints(pts);
     pts = borderize(pts, $scope.unit_dimension / 2, $scope.corner_radius * 2);
+    pts = filterSmallPathFeatures(pts, $scope.job.bit_diameter);
     var border = $scope.job.cuts[1];
     border.points = pts;
 
@@ -439,6 +492,7 @@ app.controller('Ctrl', function ($scope) {
     scut.points = translatePts(scut.points, minPt);
     border.points = translatePts(border.points, minPt);
     $scope.job.cuts = [scut, border];
+    $scope.job.cuts[1].corner_radius = $scope.corner_radius;
 
     $scope.yaml = JSON.stringify($scope.job, function(key, val) {
       return val.toFixed ? Number(val.toFixed(6)) : val;
