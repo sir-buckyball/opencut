@@ -368,11 +368,32 @@ function bracketX($scope) {
   return dedup(pts);
 }
 
+
 /**
- * Filter out features in a path which are too small for a cutting bit to
- * cut.
+ * Return the intersection point of two line segments defined by 4 points or
+ * null if there is no singular intersection point.
  */
-function filterSmallPathFeatures(pts, bitDiameter) {
+function intersectionPoint(p1, p2, p3, p4) {
+  var denom = ((p4[1] - p3[1]) * (p2[0] - p1[0])) - ((p4[0] - p3[0]) * (p2[1] - p1[1]));
+  if (denom == 0) {
+    return null;
+  }
+  var a = p1[1] - p3[1];
+  var b = p1[0] - p3[0];
+  var num1 = ((p4[0] - p3[0]) * a) - ((p4[1] - p3[1]) * b);
+  var num2 = ((p2[0] - p1[0]) * a) - ((p2[1] - p1[1]) * b);
+  a = num1 / denom;
+  b = num2 / denom;
+  if ((a > 0 && a < 1) && (b > 0 && b < 1)) {
+    return [p1[0] + (a * (p2[0] - p1[0])), p1[1] + (a * (p2[1] - p1[1]))];
+  }
+  return null;
+}
+
+/**
+ * Remove interior loops from a path.
+ */
+function removeInternalLoops(pts) {
   if (pts.length < 4) {
     return pts;
   }
@@ -380,32 +401,24 @@ function filterSmallPathFeatures(pts, bitDiameter) {
   for (var i = 2; i < pts.length - 1; i++) {
     var p1 = npts[npts.length - 2];
     var p2 = npts[npts.length - 1];
-    var p3 = pts[i];
-    var p4 = pts[i + 1];
-    if (dist(p2, p3) >= bitDiameter || bendAngle4(p1, p2, p3, p4) > 0) {
-      npts.push(p3);
-      continue;
-    }
 
-    // Edge case where we have a long skinny alley
-    if (dist(p1, p4) < bitDiameter) {
+    var inter = null;
+    var j = i;
+    for (; j < pts.length - 1; j++) {
+      var p3 = pts[j];
+      var p4 = pts[j + 1];
+      inter = intersectionPoint(p1, p2, p3, p4);
+      if (inter != null) {
+        break;
+      }
+    }
+    if (inter != null) {
       npts.pop();
-      npts.push(p4);
-      i++;
-      continue;
+      npts.push(inter);
+      i = j;
+    } else {
+      npts.push(pts[i]);
     }
-
-    var denom = (p1[0] - p2[0]) * (p3[1] - p4[1]) - (p1[1] - p2[1]) * (p3[0] - p4[0]);
-    if (denom == 0) {
-      npts.push(p3);
-      continue;
-    }
-    var c1 = p1[0] * p2[1] - p1[1] * p2[0];
-    var c2 = p3[0] * p4[1] - p3[1] * p4[0];
-    var x = (c1 * (p3[0] - p4[0]) - c2 * (p1[0] - p2[0])) / denom;
-    var y = (c1 * (p3[1] - p4[1]) - c2 * (p1[1] - p2[1])) / denom;
-    npts.pop();
-    npts.push([x, y]);
   }
   npts.push(pts[pts.length - 1]);
   return npts;
@@ -483,7 +496,7 @@ app.controller('Ctrl', function ($scope) {
     // Border.
     pts = simplifyPoints(pts);
     pts = borderize(pts, $scope.unit_dimension / 2, $scope.corner_radius * 2);
-    pts = filterSmallPathFeatures(pts, $scope.job.bit_diameter);
+    pts = removeInternalLoops(pts);
     var border = $scope.job.cuts[1];
     border.points = pts;
 
