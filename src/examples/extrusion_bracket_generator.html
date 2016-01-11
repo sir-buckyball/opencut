@@ -368,6 +368,19 @@ function bracketX($scope) {
   return dedup(pts);
 }
 
+function bracketY($scope) {
+  var ang = $scope.angle * Math.PI / 360;
+  var ud = $scope.unit_dimension;
+  var pts = [];
+  for (var x = 0; x < $scope.x_units; x++) {
+    pts.push(rotatePoint([0, x * ud], ang));
+    pts.push(rotatePoint([0, x * ud], -ang));
+  }
+  for (var y = 0; y < $scope.y_units; y++) {
+    pts.push([0, -y * ud]);
+  }
+  return dedup(pts);
+}
 
 /**
  * Return the intersection point of two line segments defined by 4 points or
@@ -484,6 +497,8 @@ app.controller('Ctrl', function ($scope) {
       pts = bracketT($scope);
     } else if ($scope.bracket_type == "X") {
       pts = bracketX($scope);
+    } else if ($scope.bracket_type == "Y") {
+      pts = bracketY($scope);
     }
 
     // Generate a border around all of the hole points.
@@ -552,6 +567,7 @@ app.controller('Ctrl', function ($scope) {
             <option>L</option>
             <option>T</option>
             <option>X</option>
+            <option>Y</option>
           </select>
         </div>
 
