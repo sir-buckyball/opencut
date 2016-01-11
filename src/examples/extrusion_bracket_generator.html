@@ -339,6 +339,21 @@ function bracketH($scope) {
   return dedup(pts);
 }
 
+function bracketK($scope) {
+  var ang = $scope.angle * Math.PI / 360;
+  var hy = Math.floor($scope.y_units / 2);
+  var ud = $scope.unit_dimension;
+  var pts = [];
+  for (var x = 0; x < $scope.x_units; x++) {
+    pts.push(rotatePoint([x * ud, hy * ud], ang, [0, hy * ud]));
+    pts.push(rotatePoint([x * ud, hy * ud], -ang, [0, hy * ud]));
+  }
+  for (var y = 0; y < $scope.y_units; y++) {
+    pts.push([0, y * ud]);
+  }
+  return dedup(pts);
+}
+
 function bracketT($scope) {
   var ang = $scope.angle * Math.PI / 180;
   var h = Math.floor($scope.x_units / 2);
@@ -368,6 +383,19 @@ function bracketX($scope) {
   return dedup(pts);
 }
 
+function bracketY($scope) {
+  var ang = $scope.angle * Math.PI / 360;
+  var ud = $scope.unit_dimension;
+  var pts = [];
+  for (var x = 0; x < $scope.x_units; x++) {
+    pts.push(rotatePoint([0, x * ud], ang));
+    pts.push(rotatePoint([0, x * ud], -ang));
+  }
+  for (var y = 0; y < $scope.y_units; y++) {
+    pts.push([0, -y * ud]);
+  }
+  return dedup(pts);
+}
 
 /**
  * Return the intersection point of two line segments defined by 4 points or
@@ -480,10 +508,14 @@ app.controller('Ctrl', function ($scope) {
       pts = bracketL($scope);
     } else if ($scope.bracket_type == "H") {
       pts = bracketH($scope);
+    } else if ($scope.bracket_type == "K") {
+      pts = bracketK($scope);
     } else if ($scope.bracket_type == "T") {
       pts = bracketT($scope);
     } else if ($scope.bracket_type == "X") {
       pts = bracketX($scope);
+    } else if ($scope.bracket_type == "Y") {
+      pts = bracketY($scope);
     }
 
     // Generate a border around all of the hole points.
@@ -549,9 +581,11 @@ app.controller('Ctrl', function ($scope) {
           bracket type: <select ng-model="bracket_type"
               ng-model-options="{updateOn:'default blur',debounce:{'default':100, 'blur':0}}">
             <option>H</option>
+            <option>K</option>
             <option>L</option>
             <option>T</option>
             <option>X</option>
+            <option>Y</option>
           </select>
         </div>
 
