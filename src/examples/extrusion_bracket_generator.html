@@ -309,7 +309,23 @@ function borderize(pts, distance, minDist) {
   return out;
 }
 
-function bracketL($scope) {
+var bracketTypes = {};
+bracketTypes["C"] = function($scope) {
+  var ang = $scope.angle * Math.PI / 180;
+  var ud = $scope.unit_dimension;
+  var pts = [];
+  for (var x = 0; x < $scope.x_units; x++) {
+    pts.push(rotatePoint([0, x * ud], -ang));
+    pts.push(rotatePoint([0, ($scope.y_units - x - 1) * ud], ang,
+        [0, ud * ($scope.y_units - 1)]));
+  }
+  for (var y = 0; y < $scope.y_units; y++) {
+    pts.push([0, y * ud]);
+  }
+  return dedup(pts);
+};
+
+bracketTypes["L"] = function($scope) {
   var ang = $scope.angle * Math.PI / 180;
   var pts = [];
   for (var x = 0; x < $scope.x_units; x++) {
@@ -319,9 +335,9 @@ function bracketL($scope) {
     pts.push(rotatePoint([y * $scope.unit_dimension, 0], ang));
   }
   return dedup(pts);
-}
+};
 
-function bracketH($scope) {
+bracketTypes["H"] = function($scope) {
   var ang = $scope.angle * Math.PI / 180;
   var h = Math.floor($scope.y_units / 2);
   var pts = [];
@@ -337,9 +353,9 @@ function bracketH($scope) {
     pts.push(rotatePoint([(y2 - yoff) * $scope.unit_dimension, 0], -ang, [x2, 0]));
   }
   return dedup(pts);
-}
+};
 
-function bracketK($scope) {
+bracketTypes["K"] = function($scope) {
   var ang = $scope.angle * Math.PI / 360;
   var hy = Math.floor($scope.y_units / 2);
   var ud = $scope.unit_dimension;
@@ -352,9 +368,23 @@ function bracketK($scope) {
     pts.push([0, y * ud]);
   }
   return dedup(pts);
-}
+};
 
-function bracketT($scope) {
+bracketTypes["S"] = function($scope) {
+  var ang = -(Math.PI - $scope.angle * Math.PI / 180);
+  var ud = $scope.unit_dimension;
+  var pts = [];
+  for (var x = 0; x < $scope.x_units; x++) {
+    pts.push(rotatePoint([0, (x + $scope.y_units - 1) * ud], ang, [0, ud * ($scope.y_units - 1)]));
+    pts.push(rotatePoint([0, -x * ud], ang));
+  }
+  for (var y = 0; y < $scope.y_units; y++) {
+    pts.push([0, y * ud]);
+  }
+  return dedup(pts);
+};
+
+bracketTypes["T"] = function($scope) {
   var ang = $scope.angle * Math.PI / 180;
   var h = Math.floor($scope.x_units / 2);
   var ud = $scope.unit_dimension;
@@ -366,9 +396,9 @@ function bracketT($scope) {
     pts.push(rotatePoint([(y + h) * ud, 0], -ang, [h * ud, 0]));
   }
   return dedup(pts);
-}
+};
 
-function bracketX($scope) {
+bracketTypes["X"] = function($scope) {
   var ang = $scope.angle * Math.PI / 180;
   var hx = Math.floor($scope.x_units / 2);
   var hy = Math.floor($scope.y_units / 2);
@@ -381,9 +411,9 @@ function bracketX($scope) {
     pts.push(rotatePoint([(y - hy + hx) * ud, 0], -ang, [hx * ud, 0]));
   }
   return dedup(pts);
-}
+};
 
-function bracketY($scope) {
+bracketTypes["Y"] = function($scope) {
   var ang = $scope.angle * Math.PI / 360;
   var ud = $scope.unit_dimension;
   var pts = [];
@@ -395,7 +425,21 @@ function bracketY($scope) {
     pts.push([0, -y * ud]);
   }
   return dedup(pts);
-}
+};
+
+bracketTypes["Z"] = function($scope) {
+  var ang = Math.PI - $scope.angle * Math.PI / 180;
+  var ud = $scope.unit_dimension;
+  var pts = [];
+  for (var x = 0; x < $scope.x_units; x++) {
+    pts.push(rotatePoint([0, (x + $scope.y_units - 1) * ud], ang, [0, ud * ($scope.y_units - 1)]));
+    pts.push(rotatePoint([0, -x * ud], ang));
+  }
+  for (var y = 0; y < $scope.y_units; y++) {
+    pts.push([0, y * ud]);
+  }
+  return dedup(pts);
+};
 
 /**
  * Return the intersection point of two line segments defined by 4 points or
@@ -502,23 +546,8 @@ app.controller('Ctrl', function ($scope) {
       "job.cuts[0].cap_diameter",
       "job.cuts[0].cap_depth",], function() {
 
-    // Calculate where we want holes.
-    var pts;
-    if ($scope.bracket_type == "L") {
-      pts = bracketL($scope);
-    } else if ($scope.bracket_type == "H") {
-      pts = bracketH($scope);
-    } else if ($scope.bracket_type == "K") {
-      pts = bracketK($scope);
-    } else if ($scope.bracket_type == "T") {
-      pts = bracketT($scope);
-    } else if ($scope.bracket_type == "X") {
-      pts = bracketX($scope);
-    } else if ($scope.bracket_type == "Y") {
-      pts = bracketY($scope);
-    }
-
-    // Generate a border around all of the hole points.
+    // Calculate where we want holes and generate a border around them.
+    var pts = bracketTypes[$scope.bracket_type]($scope);
     pts = walkAroundTree(minimumSpanningTree(pts));
 
     // screwholes
@@ -580,12 +609,15 @@ app.controller('Ctrl', function ($scope) {
         <div>
           bracket type: <select ng-model="bracket_type"
               ng-model-options="{updateOn:'default blur',debounce:{'default':100, 'blur':0}}">
+            <option>C</option>
             <option>H</option>
             <option>K</option>
             <option>L</option>
+            <option>S</option>
             <option>T</option>
             <option>X</option>
             <option>Y</option>
+            <option>Z</option>
           </select>
         </div>
 
