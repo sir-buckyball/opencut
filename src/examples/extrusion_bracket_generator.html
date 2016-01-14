@@ -309,6 +309,21 @@ function borderize(pts, distance, minDist) {
   return out;
 }
 
+function bracketC($scope) {
+  var ang = $scope.angle * Math.PI / 180;
+  var ud = $scope.unit_dimension;
+  var pts = [];
+  for (var x = 0; x < $scope.x_units; x++) {
+    pts.push(rotatePoint([0, x * ud], -ang));
+    pts.push(rotatePoint([0, ($scope.y_units - x - 1) * ud], ang,
+        [0, ud * ($scope.y_units - 1)]));
+  }
+  for (var y = 0; y < $scope.y_units; y++) {
+    pts.push([0, y * ud]);
+  }
+  return dedup(pts);
+}
+
 function bracketL($scope) {
   var ang = $scope.angle * Math.PI / 180;
   var pts = [];
@@ -347,6 +362,20 @@ function bracketK($scope) {
   for (var x = 0; x < $scope.x_units; x++) {
     pts.push(rotatePoint([x * ud, hy * ud], ang, [0, hy * ud]));
     pts.push(rotatePoint([x * ud, hy * ud], -ang, [0, hy * ud]));
+  }
+  for (var y = 0; y < $scope.y_units; y++) {
+    pts.push([0, y * ud]);
+  }
+  return dedup(pts);
+}
+
+function bracketS($scope) {
+  var ang = Math.PI - $scope.angle * Math.PI / 180;
+  var ud = $scope.unit_dimension;
+  var pts = [];
+  for (var x = 0; x < $scope.x_units; x++) {
+    pts.push(rotatePoint([0, (x + $scope.y_units - 1) * ud], ang, [0, ud * ($scope.y_units - 1)]));
+    pts.push(rotatePoint([0, -x * ud], ang));
   }
   for (var y = 0; y < $scope.y_units; y++) {
     pts.push([0, y * ud]);
@@ -504,12 +533,16 @@ app.controller('Ctrl', function ($scope) {
 
     // Calculate where we want holes.
     var pts;
-    if ($scope.bracket_type == "L") {
-      pts = bracketL($scope);
+    if ($scope.bracket_type == "C") {
+      pts = bracketC($scope);
     } else if ($scope.bracket_type == "H") {
       pts = bracketH($scope);
     } else if ($scope.bracket_type == "K") {
       pts = bracketK($scope);
+    } else if ($scope.bracket_type == "L") {
+      pts = bracketL($scope);
+    } else if ($scope.bracket_type == "S") {
+      pts = bracketS($scope);
     } else if ($scope.bracket_type == "T") {
       pts = bracketT($scope);
     } else if ($scope.bracket_type == "X") {
@@ -580,9 +613,11 @@ app.controller('Ctrl', function ($scope) {
         <div>
           bracket type: <select ng-model="bracket_type"
               ng-model-options="{updateOn:'default blur',debounce:{'default':100, 'blur':0}}">
+            <option>C</option>
             <option>H</option>
             <option>K</option>
             <option>L</option>
+            <option>S</option>
             <option>T</option>
             <option>X</option>
             <option>Y</option>
