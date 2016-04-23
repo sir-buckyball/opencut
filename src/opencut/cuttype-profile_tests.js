@@ -1344,3 +1344,97 @@ test("very small corner_radius", function() {
   var results = window.opencut.toGCode(job);
   deepEqual(results, expected);
 });
+
+test("inner profile with inward line", function() {
+  var job = {
+    "name": "test_job",
+    "units": "inch",
+    "bit_diameter": 2,
+    "feed_rate": 10,
+    "plunge_rate": 5,
+    "safety_height": 1,
+    "z_step_size": 1,
+    "cuts": [{
+      "type": "profile",
+      "depth": -1,
+      "side": "inside",
+      "points": [[0, 0], [0, 10], [5, 10], [5, 5], [5, 10], [10, 10], [10, 0], [0, 0]]
+    }]
+  };
+
+  var expected = {
+    "errors": [],
+    "warnings": [],
+    "gcode": [
+      "G90",
+      "G20",
+      "",
+      "; begin cut: profile",
+      "G90",
+      "G1 Z1 F20",
+      "G0 X1 Y1 F10",
+      "G1 Z-1 F5",
+      "G1 X1 Y9 F10",
+      "G1 X4 Y9 F10",
+      "G1 X4 Y5 F10",
+      "G3 X6 Y5 I1 J0 F10",
+      "G1 X6 Y9 F10",
+      "G1 X9 Y9 F10",
+      "G1 X9 Y1 F10",
+      "G1 X1 Y1 F10",
+      "G1 Z1 F20",
+      "G4 P0",
+      "; end cut: profile"
+    ]};
+
+  var results = window.opencut.toGCode(job);
+  deepEqual(results, expected);
+});
+
+test("inner profile with outward line", function() {
+  var job = {
+    "name": "test_job",
+    "units": "inch",
+    "bit_diameter": 2,
+    "feed_rate": 10,
+    "plunge_rate": 5,
+    "safety_height": 1,
+    "z_step_size": 1,
+    "cuts": [{
+      "type": "profile",
+      "depth": -1,
+      "side": "inside",
+      "points": [[0, 0], [0, 10], [5, 10], [5, 15], [5, 10], [10, 10], [10, 0], [0, 0]]
+    }]
+  };
+
+  var expected = {
+    "errors": [],
+    "warnings": ["tight corner at [5,15] resulted in a potentially bad path."],
+    "gcode": [
+      "G90",
+      "G20",
+      "",
+      "; begin cut: profile",
+      "G90",
+      "G1 Z1 F20",
+      "G0 X1 Y1 F10",
+      "G1 Z-1 F5",
+      "G1 X1 Y9 F10",
+      "G1 X5 Y9 F10",
+      "G3 X6 Y10 I0 J1 F10",
+      "G1 X6 Y15 F10",
+      "G3 X4 Y15 I-1 J0 F10",
+      "G1 X4 Y10 F10",
+      "G3 X5 Y9 I1 J0 F10",
+      "G1 X9 Y9 F10",
+      "G1 X9 Y1 F10",
+      "G1 X1 Y1 F10",
+      "G1 Z1 F20",
+      "G4 P0",
+      "; end cut: profile"
+    ]};
+
+  var results = window.opencut.toGCode(job);
+  deepEqual(results, expected);
+});
