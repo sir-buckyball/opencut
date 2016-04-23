@@ -140,6 +140,40 @@
     };
   };
 
+  /**
+   * Return the distance between a point, and a line segment defined
+   * by 2 points.
+   *
+   * Copied from
+   * http://stackoverflow.com/questions/849211/shortest-distance-between-a-point-and-a-line-segment
+   */
+  function distToSegment(p, v, w) {
+    var dist2 = function(v, w) {
+      return Math.pow(v[0] - w[0], 2) + Math.pow(v[1] - w[1], 2);
+    };
+
+    var l2 = dist2(v, w);
+    if (l2 == 0) {
+      return Math.sqrt(dist2(p, v));
+    }
+    var t = ((p[0] - v[0]) * (w[0] - v[0]) + (p[1] - v[1]) * (w[1] - v[1])) / l2;
+    t = Math.max(0, Math.min(1, t));
+    return Math.sqrt(dist2(p, [v[0] + t * (w[0] - v[0]),
+                               v[1] + t * (w[1] - v[1])]));
+  }
+
+  function trimRepeatedPoints(pts) {
+    var prev = pts[0];
+    var trimmedPoints = [prev];
+    for (var i = 1; i < pts.length; i++) {
+      var p = pts[i];
+      if (!(prev[0] == p[0] && prev[1] == p[1])) {
+        prev = p;
+        trimmedPoints.push(p);
+      }
+    }
+    return trimmedPoints;
+  }
 
   /**
    * Perform a profile cut following a given path. At the corners, the path
@@ -161,16 +195,7 @@
     }
 
     // Remove all repeated points (0 length segments)
-    var prev = cut.points[0];
-    var trimmedPoints = [prev];
-    for (var i = 1; i < cut.points.length; i++) {
-      var p = cut.points[i];
-      if (!(prev[0] == p[0] && prev[1] == p[1])) {
-        prev = p;
-        trimmedPoints.push(p);
-      }
-    }
-    cut.points = trimmedPoints;
+    cut.points = trimRepeatedPoints(cut.points);
     if (cut.points.length < 2) {
       throw "a path must have at least 2 distinct points";
     }
@@ -224,7 +249,7 @@
           a2 = a1;
         }
         var cornerAngle = a2 - a1;
-        if (cornerAngle <= -Math.PI) {
+        if (cornerAngle < -Math.PI) {
           cornerAngle += 2 * Math.PI;
         } else if (cornerAngle > Math.PI) {
           cornerAngle -= 2 * Math.PI;
@@ -239,21 +264,46 @@
           if (cut.corner_radius > 0) {
             throw "corner_radius [" + cut.corner_radius + "] is too large for point " + JSON.stringify(pt);
           }
-          warnings.push("too tight a corner detected at " + JSON.stringify(pt));
         }
         var toX = pt[0] + r * Math.cos(a1) + coff * Math.sin(a1);
         var toY = pt[1] - r * Math.sin(a1) + coff * Math.cos(a1);
+
+        // Cap the offset if the distance is too great.
+        if (distToSegment([toX, toY], prev, pt) > r * 1.01) {
+          toX = pt[0] + r * Math.cos(a1);
+          toY = pt[1] - r * Math.sin(a1);
+          warnings.push("tight corner at " + JSON.stringify(pt)
+              + " resulted in a potentially bad path.");
+        }
+
         if (needStartPositioning) {
           toX = pt[0] + r * Math.cos(a2) - coff * Math.sin(a2);
           toY = pt[1] - r * Math.sin(a2) - coff * Math.cos(a2);
+
+          // Cap the offset if the distance is too great.
+          if (distToSegment([toX, toY], pt, next) > r * 1.01) {
+            toX = pt[0] + r * Math.cos(a2);
+            toY = pt[1] - r * Math.sin(a2);
+            warnings.push("tight corner at " + JSON.stringify(pt)
+                + " resulted in a potentially bad path.");
+          }
         }
         if (cornerAngle > 0 && (cut.corner_radius <= 0 || cut.corner_compensation)) {
           // TODO: There is some evidence that cornerAngle is really
           // (90 - alpha / 2) where alpha is the angle between 3 points.
           // The distance calculation should really be sin().
           var dist = r / Math.cos(cornerAngle / 2);
-          toX = pt[0] + dist * Math.cos(a1 + cornerAngle / 2);
-          toY = pt[1] - dist * Math.sin(a1 + cornerAngle / 2);
+          var np = [pt[0] + dist * Math.cos(a1 + cornerAngle / 2),
+                    pt[1] - dist * Math.sin(a1 + cornerAngle / 2)];
+
+          // Make sure our target point is somewhere along the line segment.
+          if (distToSegment(np, prev, pt) > r * 1.01) {
+            warnings.push("tight corner at " + JSON.stringify(pt)
+                + " resulted in a potentially bad path.");
+          } else {
+            toX = np[0];
+            toY = np[1];
+          }
         }
 
         if (needStartPositioning) {
@@ -271,11 +321,26 @@
         // on the inside, we MAY need to apply corner compensation. In either
         // case we also MAY need arc to apply a corner_radius.
         if (j > 0) {
-          if (cornerAngle < 0) {
+          // Special case where we are effectively doing a 180.
+          if (Math.abs(Math.PI - cornerAngle) < 0.001) {
+            gcode.push("G3" +
+                " X" + (pt[0] + r * Math.cos(a2)) +
+                " Y" + (pt[1] - r * Math.sin(a2)) +
+                " I" + (-r * Math.cos(a1)) +
+                " J" + (r * Math.sin(a1)) +
+                " F" + workspace.feed_rate);
+          } else if (cornerAngle < 0) {
+            var np2 = [pt[0] + r * Math.cos(a2) - coff * Math.sin(a2),
+                      pt[1] - r * Math.sin(a2) - coff * Math.cos(a2)];
+            // Don't go too far away.
+            if (distToSegment(np2, pt, next) > r * 1.01) {
+              np2 = [pt[0] + r * Math.cos(a2), pt[1] - r * Math.sin(a2)];
+            }
+
             // TODO: arc interpolations over 120˚ are not recommended. split this arc.
             gcode.push("G3" +
-                " X" + (pt[0] + r * Math.cos(a2) - coff * Math.sin(a2)) +
-                " Y" + (pt[1] - r * Math.sin(a2) - coff * Math.cos(a2)) +
+                " X" + np2[0] +
+                " Y" + np2[1] +
                 " I" + (-(r + cr) * Math.cos(a1)) +
                 " J" + ((r + cr) * Math.sin(a1)) +
                 " F" + workspace.feed_rate);
