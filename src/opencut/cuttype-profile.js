@@ -11,7 +11,7 @@
  * options are to have a rounded corner excluding the specified corner, or to
  * cut into the edge a bit more so the corner of the path is included.
  *
- * TODO: more shapes (rounded rectangles, polygons)
+ * TODO: more shapes (polygons)
  */
 (function() {
   /**
