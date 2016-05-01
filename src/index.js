@@ -8,6 +8,10 @@ app.controller('Ctrl', function ($rootScope, $scope, $window, $timeout, hotkeys)
   var renderer = newGcodeRenderer(document.getElementById("preview"));
 
   $scope.jobYaml = "";
+  if ($window.localStorage["jobYaml"] !== undefined) {
+    $scope.jobYaml = $window.localStorage["jobYaml"];
+  }
+
   $scope.yamlEditorOptions = {
       lineWrapping : true,
       lineNumbers: true,
@@ -56,6 +60,8 @@ app.controller('Ctrl', function ($rootScope, $scope, $window, $timeout, hotkeys)
   $("#input-file-local").change(handleFile);
   
   
+
+
   $scope.$watch("jobYaml", function(newVal, oldVal) {
     renderer.resizeView();
 
@@ -100,12 +106,13 @@ app.controller('Ctrl', function ($rootScope, $scope, $window, $timeout, hotkeys)
       bitDiameter = job.bit_diameter * ((job.units == "inch") ? 25.4 : 1);
     }
     renderer.renderGcode($scope.gcode, {'bit_diameter': bitDiameter});
+    $window.localStorage["jobYaml"] = newVal;
   });
 
   $(window).resize(function() {
     renderer.resizeView();
   });
-  
+
   var _saveFile = function(e, payload, fileSuffix, mime) {
     if (e != undefined) {
       e.stopPropagation();
@@ -127,7 +134,7 @@ app.controller('Ctrl', function ($rootScope, $scope, $window, $timeout, hotkeys)
   $scope.exportGcode = function(e) {
     _saveFile(e, $scope.gcode, "gcode", "text/x-gcode");
   };
-  
+
   hotkeys.add({
     combo: 'mod+o',
     description: 'open a file',
