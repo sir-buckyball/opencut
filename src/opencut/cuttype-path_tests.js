@@ -270,3 +270,91 @@ test("path width", function() {
   var results = window.opencut.toGCode(job);
   deepEqual(results, expected);
 });
+
+test("path width deep loop", function() {
+  var job = {
+    "name": "test_job",
+    "units": "mm",
+    "bit_diameter": 2,
+    "feed_rate": 100,
+    "plunge_rate": 25,
+    "z_step_size": 1,
+    "cuts": [{
+      "type": "path",
+      "depth": -2,
+      "width": 4,
+      "points": [[0, 0], [100, 0], [100, 100], [0, 100], [0, 0]],
+    }]
+  };
+
+  var expected = {
+    "errors": [],
+    "warnings": [],
+    "gcode": [
+      "G90",
+      "G21",
+      "",
+      "; begin cut: path",
+      "G90",
+      "G1 Z5 F100",
+      "G0 X0 Y0",
+      "G1 Z-1 F25",
+      "G1 F100",
+      "G1 X100 Y0",
+      "G1 X100 Y100",
+      "G1 X0 Y100",
+      "G1 X0 Y0",
+      "G1 X1 Y0",
+      "G1 X1 Y100",
+      "G1 X0 Y99",
+      "G1 X100 Y99",
+      "G1 X99 Y100",
+      "G1 X99 Y0",
+      "G1 X100 Y1",
+      "G1 X0 Y1",
+      "G3 X-1 Y0 I0 J-1",
+      "G3 X0 Y-1 I1 J0",
+      "G1 X100 Y-1",
+      "G3 X101 Y0 I0 J1",
+      "G1 X101 Y100",
+      "G3 X100 Y101 I-1 J0",
+      "G1 X0 Y101",
+      "G3 X-1 Y100 I0 J-1",
+      "G1 X-1 Y0",
+      "G3 X1 Y0 I1 J0",
+      "G1 Z5 F100",
+      "G4 P0",
+      "G0 X0 Y0",
+      "G1 Z-2 F25",
+      "G1 F100",
+      "G1 X100 Y0",
+      "G1 X100 Y100",
+      "G1 X0 Y100",
+      "G1 X0 Y0",
+      "G1 X1 Y0",
+      "G1 X1 Y100",
+      "G1 X0 Y99",
+      "G1 X100 Y99",
+      "G1 X99 Y100",
+      "G1 X99 Y0",
+      "G1 X100 Y1",
+      "G1 X0 Y1",
+      "G3 X-1 Y0 I0 J-1",
+      "G3 X0 Y-1 I1 J0",
+      "G1 X100 Y-1",
+      "G3 X101 Y0 I0 J1",
+      "G1 X101 Y100",
+      "G3 X100 Y101 I-1 J0",
+      "G1 X0 Y101",
+      "G3 X-1 Y100 I0 J-1",
+      "G1 X-1 Y0",
+      "G3 X1 Y0 I1 J0",
+      "G1 Z5 F100",
+      "G4 P0",
+      "; end cut: path"
+    ]
+  };
+
+  var results = window.opencut.toGCode(job);
+  deepEqual(results, expected);
+});
