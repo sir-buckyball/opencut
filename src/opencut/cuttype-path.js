@@ -157,6 +157,7 @@
       Array.prototype.push.apply(gcode, path.gcode);
 
       if (cut.width > workspace.bit_diameter) {
+        joinEnds = false;
         var sideAmt = (cut.width - workspace.bit_diameter) / 2;
 
         // Note that we should loop around just a bit more to get the path to
