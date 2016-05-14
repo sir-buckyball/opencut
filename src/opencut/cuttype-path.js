@@ -64,18 +64,20 @@
         var np = [pt[0] + r * Math.cos(a2), pt[1] - r * Math.sin(a2)];
         // When we are on the outside of an angle, we MUST arc around the
         // corner to keep it sharp without going out of our way.
-        if (cornerAngle < 0) {
-          gcode.push("G3 X" + np[0] + " Y" + np[1] +
-                       " I" + (-r * Math.cos(a1)) +
-                       " J" + (r * Math.sin(a1)));
-        } else if (Math.abs(Math.PI - cornerAngle) < 0.0001) {
-          var midpoint = rotatePoint(np, - Math.PI / 2, pt);
-          gcode.push("G3 X" + midpoint[0] + " Y" + midpoint[1] +
-                       " I" + (-r * Math.cos(a1)) +
-                       " J" + (r * Math.sin(a1)));
-          gcode.push("G3 X" + np[0] + " Y" + np[1] +
-                       " I" + (-r * Math.sin(a1)) +
-                       " J" + (-r * Math.cos(a1)));
+        var midpoint = rotatePoint(np, - Math.PI / 2, pt);
+        if (cornerAngle < 0 || Math.abs(Math.PI - cornerAngle) < 0.0001) {
+          if (cornerAngle < -Math.PI / 2 || cornerAngle > Math.PI / 2) {
+            gcode.push("G3 X" + midpoint[0] + " Y" + midpoint[1] +
+                         " I" + (-r * Math.cos(a1)) +
+                         " J" + (r * Math.sin(a1)));
+            gcode.push("G3 X" + np[0] + " Y" + np[1] +
+                         " I" + (-r * Math.sin(a1)) +
+                         " J" + (-r * Math.cos(a1)));
+          } else {
+            gcode.push("G3 X" + np[0] + " Y" + np[1] +
+                         " I" + (-r * Math.cos(a1)) +
+                         " J" + (r * Math.sin(a1)));
+          }
         } else if (cornerAngle != 0) {
           gcode.push("G1 X" + np[0] + " Y" + np[1]);
         }
