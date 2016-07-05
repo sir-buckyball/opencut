@@ -34,6 +34,8 @@
 
     var gcode = [];
     var r = opt_options.path_offset;
+    var fr = (opt_options.feed_rate !== undefined) ?
+        " F" + opt_options.feed_rate : "";
 
     // Calculate the starting point we should be positioned at. Since this
     // method does not care about the Z positioning, the calling code needs
@@ -57,9 +59,8 @@
         cornerAngle -= 2 * Math.PI;
       }
 
-      // Convenience variable for the bit radius.
       gcode.push("G1 X" + (pt[0] + r * Math.cos(a1)) +
-                   " Y" + (pt[1] - r * Math.sin(a1)));
+                   " Y" + (pt[1] - r * Math.sin(a1)) + fr);
       if (r != 0) {
         var np = [pt[0] + r * Math.cos(a2), pt[1] - r * Math.sin(a2)];
         // When we are on the outside of an angle, we MUST arc around the
@@ -82,13 +83,14 @@
           gcode.push("G1 X" + np[0] + " Y" + np[1]);
         }
       }
+      fr = "";
     }
 
     // Add the final point.
     var k = pts.length - 1;
     var ka = Math.atan2(pts[k][0] - pts[k - 1][0], pts[k][1] - pts[k - 1][1]);
     gcode.push("G1 X" + (pts[k][0] + r * Math.cos(ka)) +
-                 " Y" + (pts[k][1] - r * Math.sin(ka)));
+                 " Y" + (pts[k][1] - r * Math.sin(ka)) + fr);
 
     return {
       "gcode": gcode,
@@ -125,7 +127,9 @@
     }
 
     // Calculate the XY path.
-    var path = pathGcode(cut.points, {bit_diameter: workspace.bit_diameter});
+    var path = pathGcode(cut.points, {
+      bit_diameter: workspace.bit_diameter,
+      feed_rate: workspace.feed_rate});
 
     // We should join the ends if the first and last points are the same.
     var joinEnds = (cut.points.length > 2 &&
@@ -155,7 +159,6 @@
       gcode.push("G1 Z" + z + " F" + workspace.plunge_rate);
 
       // Cut the path. We are alreay at the starting point.
-      gcode.push("G1 F" + workspace.feed_rate);
       Array.prototype.push.apply(gcode, path.gcode);
 
       if (cut.width > workspace.bit_diameter) {
