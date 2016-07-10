@@ -40,29 +40,31 @@
 /*global opencut*/
 /*global newGcodeRenderer*/
 /*global Blob*/
+/*global JSON*/
+/*global YAML*/
 
 var app = angular.module('app', []);
 app.controller('Ctrl', function ($scope) {
   var renderer = newGcodeRenderer(document.getElementById("preview"));
 
-  $scope.knob_diameter = 50;
-  $scope.screw_diameter = 5.5;
-  $scope.nut_diameter = 10;
-  $scope.nut_depth = -2;
+  $scope.knob_diameter = 30;
+  $scope.screw_diameter = 5;
+  $scope.nut_diameter = 9.5;
+  $scope.nut_depth = -3;
   $scope.num_insets = 9;
-  $scope.inset_width = 3;
+  $scope.inset_width = 2;
 
   $scope.job = {
     units: "mm",
     bit_diameter: 3.175,
-    feed_rate: 250,
-    plunge_rate: 125,
-    default_depth: -3.175,
-    z_step_size: 1.25,
+    feed_rate: 800,
+    plunge_rate: 200,
+    default_depth: -7,
+    z_step_size: 1,
     cuts: [
       { // Hole for screw.
         type: "screwhole",
-        shaft_diameter: 3.175,
+        shaft_diameter: $scope.screw_diameter,
         points: [[0,0]],
         cap_diameter: $scope.nut_diameter,
         cap_depth: $scope.nut_depth,
@@ -95,6 +97,7 @@ app.controller('Ctrl', function ($scope) {
       ], function() {
 
     // Calculate the points for the nut.
+    $scope.job.cuts[0].shaft_diameter = $scope.screw_diameter;
     $scope.job.cuts[0].cap_diameter = $scope.nut_diameter;
     $scope.job.cuts[0].cap_depth = $scope.nut_depth;
     var nut_pts = [];
@@ -121,9 +124,10 @@ app.controller('Ctrl', function ($scope) {
     $scope.job.cuts[2].points = knob_pts;
 
     // Update the outputs.
-    $scope.yaml = JSON.stringify($scope.job, function(key, val) {
+    console.log(JSON.stringify($scope.job, function(key, val) {
       return val.toFixed ? Number(val.toFixed(6)) : val;
-    }, "  ");
+    }, "  "));
+    $scope.yaml = YAML.stringify($scope.job, 3, 2);
 
     // opencut may modify the input job so clone it.
     var processedJob = opencut.toGCode(JSON.parse(JSON.stringify($scope.job || {})));
