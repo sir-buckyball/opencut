@@ -23,9 +23,13 @@ function newGcodeRenderer(canvas) {
     var workspaceWidth = Math.max(analysis.maxPos.X - analysis.minPos.X, 50);
     var workspaceDepth = Math.max(analysis.maxPos.Y - analysis.minPos.Y, 50);
 
+    var left = analysis.minPos.X;
+    var bottom = analysis.minPos.Y;
     if (options.bit_diameter) {
       workspaceWidth += options.bit_diameter * 2;
       workspaceDepth += options.bit_diameter * 2;
+      left -= options.bit_diameter;
+      bottom -= options.bit_diameter;
     }
 
     // Set an appropriate zoom/centering given our analysis.
@@ -33,8 +37,8 @@ function newGcodeRenderer(canvas) {
       paper.view.viewSize.width / (workspaceWidth * 1.1),
       paper.view.viewSize.height / (workspaceDepth * 1.1)));
     paper.view.setCenter(new paper.Point(
-      analysis.minPos.X + workspaceWidth / 2,
-      analysis.minPos.Y + workspaceDepth / 2));
+      left + workspaceWidth / 2,
+      bottom + workspaceDepth / 2));
   };
 
   /* Set the size of the paper canvas. */
@@ -65,6 +69,8 @@ function newGcodeRenderer(canvas) {
 
     // Run an analysis on the gcode to determine the appropriate bounds for rendering.
     analysis = analyzeGcode(commandSequence);
+    analysis.maxPos.X = Math.max(50, analysis.maxPos.X);
+    analysis.maxPos.Y = Math.max(50, analysis.maxPos.Y);
     resizeView(options);
 
     // Clear out any previous paths.
