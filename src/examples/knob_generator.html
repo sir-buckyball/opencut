@@ -1,0 +1,224 @@
+<!doctype html>
+<html ng-app="app" ng-app ng-csp>
+  <head>
+    <title>knob generator</title>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width">
+    <link rel="stylesheet" href="../deps/angular-csp.css">
+    <link rel="stylesheet" href="../deps/codemirror-4.6/codemirror.css">
+    <link rel="stylesheet" href="../deps/hotkeys.min.css">
+    <link rel="stylesheet" href="../index.css">
+    <style>
+#yaml-out {
+  width: 100%;
+  height: 40ex;
+}
+    </style>
+    <script type="text/javascript" src="../deps/jquery-2.1.4.min.js"></script>
+    <script type="text/javascript" src="../deps/angular.min.js"></script>
+    <script type="text/javascript" src="../deps/codemirror-4.6/codemirror.js"></script>
+    <script type="text/javascript" src="../deps/codemirror-4.6/mode/yaml/yaml.js"></script>
+    <script type="text/javascript" src="../deps/paper-core.min.js"></script>
+    <script type="text/javascript" src="../deps/ui-codemirror.js"></script>
+    <script type="text/javascript" src="../deps/yaml.min.js"></script>
+    <script type="text/javascript" src="../deps/hotkeys.min.js"></script>
+    <script type="text/javascript" src="../deps/FileSaver.min.js"></script>
+    <script type="text/javascript" src="../opencut/opencut.js"></script>
+    <script type="text/javascript" src="../opencut/cuttype-drill.js"></script>
+    <script type="text/javascript" src="../opencut/cuttype-gcode.js"></script>
+    <script type="text/javascript" src="../opencut/cuttype-path.js"></script>
+    <script type="text/javascript" src="../opencut/cuttype-pocket.js"></script>
+    <script type="text/javascript" src="../opencut/cuttype-profile.js"></script>
+    <script type="text/javascript" src="../opencut/cuttype-screwhole.js"></script>
+    <script type="text/javascript" src="../gcode_util.js"></script>
+    <script type="text/javascript" src="../gcode_render.js"></script>
+    <script>
+
+/*global angular*/
+/*global opencut*/
+/*global newGcodeRenderer*/
+/*global Blob*/
+
+var app = angular.module('app', []);
+app.controller('Ctrl', function ($scope) {
+  var renderer = newGcodeRenderer(document.getElementById("preview"));
+
+  $scope.knob_diameter = 50;
+  $scope.screw_diameter = 5.5;
+  $scope.nut_diameter = 10;
+  $scope.num_insets = 9;
+  $scope.inset_width = 3;
+
+  $scope.job = {
+    units: "mm",
+    bit_diameter: 3.175,
+    feed_rate: 250,
+    plunge_rate: 125,
+    default_depth: -3.175,
+    z_step_size: 1.25,
+    cuts: [
+      { // Hole for screw.
+        type: "screwhole",
+        shaft_diameter: 3.175,
+        points: [[0,0]],
+      },
+      { // Hole for nut.
+        type: "profile",
+        side: "inside",
+        depth: -2,
+      },
+      { // Knob outline.
+        type: "profile",
+        side: "outside",
+      }
+    ],
+  };
+
+  $scope.$watchGroup([
+      "knob_diameter",
+      "screw_diameter",
+      "nut_diameter",
+      "num_insets",
+      "inset_width",
+      "job.units",
+      "job.bit_diameter",
+      "job.feed_rate",
+      "job.plunge_rate",
+      "job.default_depth",
+      "job.cuts[1].depth",
+      "job.cuts[0].shaft_diameter",
+      "job.cuts[0].cap_diameter",
+      "job.cuts[0].cap_depth",], function() {
+
+    // Calculate the points for the nut.
+    var nut_pts = [];
+    var nr = $scope.nut_diameter / 2; // wrong!!!
+    for (var np = 0; np < 6; np++) {
+      nut_pts.push([nr * Math.sin(np * Math.PI / 3),
+                    nr * Math.cos(np * Math.PI / 3)]);
+    }
+    nut_pts.push(nut_pts[0]);
+    $scope.job.cuts[1].points = nut_pts;
+
+    // Calculate points for the knob.
+    var steps = 180;
+    var kr = $scope.knob_diameter / 2;
+    var knob_pts = [];
+    for (var kp = 0; kp < steps; kp++) {
+      var dinset = Math.max(0,
+          $scope.inset_width * Math.sin(kp * 2 * Math.PI / (steps / $scope.num_insets)));
+      knob_pts.push([(kr - dinset) * Math.sin(kp * 2 * Math.PI / steps),
+                     (kr - dinset) * Math.cos(kp * 2 * Math.PI / steps)]);
+    }
+    knob_pts.push(knob_pts[0]);
+    $scope.job.cuts[2].points = knob_pts;
+
+    // Update the outputs.
+    $scope.yaml = JSON.stringify($scope.job, function(key, val) {
+      return val.toFixed ? Number(val.toFixed(6)) : val;
+    }, "  ");
+    var processedJob = opencut.toGCode($scope.job || {});
+    $scope.gcode = processedJob.gcode.join("\n");
+    $scope.errors = processedJob.errors;
+    $scope.warnings = processedJob.warnings;
+    renderer.renderGcode($scope.gcode, {'bit_diameter': $scope.job.bit_diameter});
+  });
+
+  $scope.exportGcode = function(e) {
+    if (e != undefined) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+
+    var filename = "knob.gcode";
+    var blob = new Blob([$scope.gcode], {type: "text/x-gcode"});
+    console.log("saving file: " + filename);
+    window.saveAs(blob, filename);
+  };
+});
+
+
+    </script>
+  </head>
+  <body ng-controller="Ctrl">
+    <nav id="top-nav">
+      <h1>knob generator</h1>
+      <button ng-click="exportGcode()">export gcode</button>
+    </nav>
+
+    <main>
+      <article>
+        <h3>knob parameters</h3>
+
+        <div>
+          knob diameter: <input type="number" ng-model="knob_diameter" min="0"
+              ng-model-options="{updateOn:'default blur',debounce:{'default':100, 'blur':0}}">
+        </div>
+        <div>
+          screw_diameter: <input type="number" ng-model="screw_diameter" min="0"
+              ng-model-options="{updateOn:'default blur',debounce:{'default':100, 'blur':0}}">
+        </div>
+        <div>
+          nut diameter (flat-to-flat): <input type="number" ng-model="nut_diameter" min="0"
+              ng-model-options="{updateOn:'default blur',debounce:{'default':100, 'blur':0}}">
+        </div>
+        <div>
+          nut depth: <input type="number" ng-model="job.cuts[1].depth" max="0"
+              ng-model-options="{updateOn:'default blur',debounce:{'default':100, 'blur':0}}">
+        </div>
+        <div>
+          num insets: <input type="number" ng-model="num_insets" min="0" step="1"
+              ng-model-options="{updateOn:'default blur',debounce:{'default':100, 'blur':0}}">
+        </div>
+        <div>
+          insets width: <input type="number" ng-model="inset_width" min="0" step="1"
+              ng-model-options="{updateOn:'default blur',debounce:{'default':100, 'blur':0}}">
+        </div>
+
+        <h3>machining parameters</h3>
+
+        <div>
+          units: <select ng-model="job.units"
+              ng-model-options="{updateOn:'default blur',debounce:{'default':100, 'blur':0}}">
+            <option>mm</option>
+            <option>inches</option>
+          </select>
+        </div>
+
+        <div>
+          bit diameter: <input type="number" ng-model="job.bit_diameter"
+              ng-model-options="{updateOn:'default blur',debounce:{'default':100, 'blur':0}}">
+        </div>
+
+        <div>
+          feed rate ({{job.units}}/minute): <input type="number" ng-model="job.feed_rate"
+              ng-model-options="{updateOn:'default blur',debounce:{'default':100, 'blur':0}}">
+        </div>
+
+        <div>
+          plunge rate ({{job.units}}/minute): <input type="number" ng-model="job.plunge_rate"
+              ng-model-options="{updateOn:'default blur',debounce:{'default':100, 'blur':0}}">
+        </div>
+        <div>
+          depth: <input type="number" ng-model="job.default_depth" max="0"
+              ng-model-options="{updateOn:'default blur',debounce:{'default':100, 'blur':0}}">
+        </div>
+        <div>
+          z_step_size: <input type="number" ng-model="job.z_step_size" min="0"
+              ng-model-options="{updateOn:'default blur',debounce:{'default':100, 'blur':0}}">
+        </div>
+
+        <h3>YAML output</h3>
+        <div class="user-error" ng-repeat="e in errors">{{e}}</div>
+        <div class="user-warning" ng-repeat="w in warnings">{{w}}</div>
+        <textarea id="yaml-out" readonly>{{yaml}}</textarea>
+      </article>
+
+      <aside>
+      	<canvas id="preview"></canvas>
+      </aside>
+    </main>
+  </body>
+</html>
