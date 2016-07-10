@@ -124,17 +124,20 @@ app.controller('Ctrl', function ($scope) {
     $scope.job.cuts[2].points = knob_pts;
 
     // Update the outputs.
-    console.log(JSON.stringify($scope.job, function(key, val) {
+    window.json_out = JSON.stringify($scope.job, function(key, val) {
       return val.toFixed ? Number(val.toFixed(6)) : val;
-    }, "  "));
-    $scope.yaml = YAML.stringify($scope.job, 3, 2);
+    }, "  ");
+    $scope.yaml = YAML.stringify(JSON.parse(window.json_out), 3, 2);
 
     // opencut may modify the input job so clone it.
     var processedJob = opencut.toGCode(JSON.parse(JSON.stringify($scope.job || {})));
     $scope.gcode = processedJob.gcode.join("\n");
     $scope.errors = processedJob.errors;
     $scope.warnings = processedJob.warnings;
-    renderer.renderGcode($scope.gcode, {'bit_diameter': $scope.job.bit_diameter});
+    renderer.renderGcode($scope.gcode, {
+      'bit_diameter': $scope.job.bit_diameter,
+      'hide_grid': true,
+    });
   });
 
   $scope.exportGcode = function(e) {
