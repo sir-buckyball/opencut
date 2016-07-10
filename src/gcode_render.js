@@ -69,8 +69,10 @@ function newGcodeRenderer(canvas) {
 
     // Run an analysis on the gcode to determine the appropriate bounds for rendering.
     analysis = analyzeGcode(commandSequence);
-    analysis.maxPos.X = Math.max(50, analysis.maxPos.X);
-    analysis.maxPos.Y = Math.max(50, analysis.maxPos.Y);
+    if (!options.hide_grid) {
+      analysis.maxPos.X = Math.max(50, analysis.maxPos.X);
+      analysis.maxPos.Y = Math.max(50, analysis.maxPos.Y);
+    }
     resizeView(options);
 
     // Clear out any previous paths.
@@ -93,37 +95,40 @@ function newGcodeRenderer(canvas) {
     var allPaths = new paper.Group();
 
     // Draw a little graph table representing out workspace.
-    var gridLineWidth = 1 / paper.view.getZoom();
-    var gridWidth = 10 * Math.ceil(Math.max(50, analysis.maxPos.X) / 10);
-    var gridDepth = 10 * Math.ceil(Math.max(50, analysis.maxPos.Y) / 10);
-    for (var ix = 10; ix <= gridWidth; ix += 10) {
+    if (!options.hide_grid) {
+      var gridLineWidth = 1 / paper.view.getZoom();
+      var gridWidth = 10 * Math.ceil(Math.max(50, analysis.maxPos.X) / 10);
+      var gridDepth = 10 * Math.ceil(Math.max(50, analysis.maxPos.Y) / 10);
+      for (var ix = 10; ix <= gridWidth; ix += 10) {
+        allPaths.addChild(new paper.Path.Line({
+          "from": [ix, 0],
+          "to": [ix, gridDepth],
+          "strokeColor": "#DCFFFF",
+          "strokeWidth": gridLineWidth * (ix % 50 == 0) ? 1.5 : 1,
+        }));
+      }
+      for (var iy = 10; iy <= gridDepth; iy += 10) {
+        allPaths.addChild(new paper.Path.Line({
+          "from": [0, iy],
+          "to": [gridWidth, iy],
+          "strokeColor": "#DCFFFF",
+          "strokeWidth": gridLineWidth * (iy % 50 == 0) ? 1.5 : 1,
+        }));
+      }
       allPaths.addChild(new paper.Path.Line({
-        "from": [ix, 0],
-        "to": [ix, gridDepth],
-        "strokeColor": "#DCFFFF",
-        "strokeWidth": gridLineWidth * (ix % 50 == 0) ? 1.5 : 1,
+        "from": [0, 0],
+        "to": [gridWidth, 0],
+        "strokeColor": "#A3CCCC",
+        "strokeWidth": 2 * gridLineWidth,
+      }));
+      allPaths.addChild(new paper.Path.Line({
+        "from": [0, 0],
+        "to": [0, gridDepth],
+        "strokeColor": "#A3CCCC",
+        "strokeWidth": 2 * gridLineWidth,
       }));
     }
-    for (var iy = 10; iy <= gridDepth; iy += 10) {
-      allPaths.addChild(new paper.Path.Line({
-        "from": [0, iy],
-        "to": [gridWidth, iy],
-        "strokeColor": "#DCFFFF",
-        "strokeWidth": gridLineWidth * (iy % 50 == 0) ? 1.5 : 1,
-      }));
-    }
-    allPaths.addChild(new paper.Path.Line({
-      "from": [0, 0],
-      "to": [gridWidth, 0],
-      "strokeColor": "#A3CCCC",
-      "strokeWidth": 2 * gridLineWidth,
-    }));
-    allPaths.addChild(new paper.Path.Line({
-      "from": [0, 0],
-      "to": [0, gridDepth],
-      "strokeColor": "#A3CCCC",
-      "strokeWidth": 2 * gridLineWidth,
-    }));
+
 
     var depthColor = function(depth1, depth2) {
       var depth = Math.min(depth1, depth2);
