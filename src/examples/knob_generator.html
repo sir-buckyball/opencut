@@ -48,6 +48,7 @@ app.controller('Ctrl', function ($scope) {
   $scope.knob_diameter = 50;
   $scope.screw_diameter = 5.5;
   $scope.nut_diameter = 10;
+  $scope.nut_depth = -2;
   $scope.num_insets = 9;
   $scope.inset_width = 3;
 
@@ -59,15 +60,17 @@ app.controller('Ctrl', function ($scope) {
     default_depth: -3.175,
     z_step_size: 1.25,
     cuts: [
-      { // Hole for nut.
-        type: "profile",
-        side: "inside",
-        depth: -2,
-      },
       { // Hole for screw.
         type: "screwhole",
         shaft_diameter: 3.175,
         points: [[0,0]],
+        cap_diameter: $scope.nut_diameter,
+        cap_depth: $scope.nut_depth,
+      },
+      { // Hole for nut.
+        type: "profile",
+        side: "inside",
+        depth: $scope.nut_depth,
       },
       { // Knob outline.
         type: "profile",
@@ -80,6 +83,7 @@ app.controller('Ctrl', function ($scope) {
       "knob_diameter",
       "screw_diameter",
       "nut_diameter",
+      "nut_depth",
       "num_insets",
       "inset_width",
       "job.units",
@@ -87,11 +91,12 @@ app.controller('Ctrl', function ($scope) {
       "job.feed_rate",
       "job.plunge_rate",
       "job.default_depth",
-      "job.cuts[0].depth",
-      "job.cuts[1].shaft_diameter",
+      "job.cuts[0].shaft_diameter",
       ], function() {
 
     // Calculate the points for the nut.
+    $scope.job.cuts[0].cap_diameter = $scope.nut_diameter;
+    $scope.job.cuts[0].cap_depth = $scope.nut_depth;
     var nut_pts = [];
     var nr = $scope.nut_diameter / Math.sqrt(3);
     for (var np = 0; np < 6; np++) {
@@ -99,7 +104,8 @@ app.controller('Ctrl', function ($scope) {
                     nr * Math.cos(np * Math.PI / 3)]);
     }
     nut_pts.push(nut_pts[0]);
-    $scope.job.cuts[0].points = nut_pts;
+    $scope.job.cuts[1].depth = $scope.nut_depth;
+    $scope.job.cuts[1].points = nut_pts;
 
     // Calculate points for the knob.
     var steps = 180;
@@ -164,7 +170,7 @@ app.controller('Ctrl', function ($scope) {
               ng-model-options="{updateOn:'default blur',debounce:{'default':100, 'blur':0}}">
         </div>
         <div>
-          nut depth: <input type="number" ng-model="job.cuts[0].depth" max="0"
+          nut depth: <input type="number" ng-model="nut_depth" max="0"
               ng-model-options="{updateOn:'default blur',debounce:{'default':100, 'blur':0}}">
         </div>
         <div>
@@ -182,7 +188,7 @@ app.controller('Ctrl', function ($scope) {
           units: <select ng-model="job.units"
               ng-model-options="{updateOn:'default blur',debounce:{'default':100, 'blur':0}}">
             <option>mm</option>
-            <option>inches</option>
+            <option>inch</option>
           </select>
         </div>
 
