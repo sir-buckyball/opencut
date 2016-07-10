@@ -124,7 +124,9 @@ app.controller('Ctrl', function ($scope) {
     $scope.yaml = JSON.stringify($scope.job, function(key, val) {
       return val.toFixed ? Number(val.toFixed(6)) : val;
     }, "  ");
-    var processedJob = opencut.toGCode($scope.job || {});
+
+    // opencut may modify the input job so clone it.
+    var processedJob = opencut.toGCode(JSON.parse(JSON.stringify($scope.job || {})));
     $scope.gcode = processedJob.gcode.join("\n");
     $scope.errors = processedJob.errors;
     $scope.warnings = processedJob.warnings;
