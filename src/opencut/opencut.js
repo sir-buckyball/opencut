@@ -7,6 +7,7 @@
 window.opencut = function() {
   var _cutTypes = {};
   var _opencut = {};
+  var _helpers = {};
 
   /**
    * Register a new cut type.
@@ -16,7 +17,7 @@ window.opencut = function() {
    * gcode commands.
    *
    * @param {string} name The name of the cut type
-   * @param {function(workspace, cut)} func The function to call.
+   * @param {function(workspace, cut)} func The function to call
    */
   _opencut.registerCutType = function(name, func) {
     if (_cutTypes[name]) {
@@ -25,6 +26,22 @@ window.opencut = function() {
 
     console.log("cut type registered: " + name);
     _cutTypes[name] = func;
+  };
+
+  /**
+   * Register a helper method for use within cut definitions.
+   *
+   * @param {string} name The name of the helper method
+   * @param {string} description A description of this helper method
+   * @param {function} func The function to call
+   */
+  _opencut.registerHelper = function(name, description, func) {
+    if (_helpers[name]) {
+      throw "helper [" + name + "] type already defined";
+    }
+
+    console.log("helper registered: " + name + " - " + description);
+    _helpers[name] = func;
   };
 
   /**
@@ -108,7 +125,8 @@ window.opencut = function() {
       "errors": errors,
       "gcode": commands
     };
-  }
+  };
+  _opencut.registerHelper("gcodeForCut", "Generate g-code for a single cut.", gcodeForCut);
 
   /**
    * Convert a JSON object which represents a job to a g-code file for
@@ -122,7 +140,10 @@ window.opencut = function() {
     var commands = [];
 
     // Build up a workspace description.
-    var workspace = {gcodeForCut: gcodeForCut};
+    var workspace = {
+      gcodeForCut: gcodeForCut,
+      helpers: _helpers,
+    };
     workspace.units = "mm";
     if (job.units === undefined || (job.units != "mm" && job.units != "inch")) {
       warnings.push("'units' is requried to be set to ['mm', 'inch']. assuming 'mm'");
